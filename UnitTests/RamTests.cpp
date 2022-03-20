@@ -170,7 +170,7 @@ TEST_F(RamTests, Load)
 	buffer[4] = 0x6F;
 	ram.Load(buffer);
 
-	for (size_t i = emu::Ram::instructionStart; i + emu::Ram::instructionStart < buffer.size(); ++i)
+	for (size_t i = emu::Ram::instructionStart; i - emu::Ram::instructionStart < buffer.size(); ++i)
 		ASSERT_EQ(ram.GetAt(i), buffer[i - emu::Ram::instructionStart]);
 	for (size_t i = emu::Ram::instructionStart + buffer.size(); i < ram.GetSize(); ++i)
 		ASSERT_EQ(ram.GetAt(i), 0);

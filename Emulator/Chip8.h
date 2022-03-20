@@ -16,12 +16,14 @@ namespace emu
 	{
 	public:
 		Chip8();
-		void LoadRom(const std::filesystem::path& path);
+		bool LoadRom(const std::filesystem::path& path);
 
-		void Cycle();
+		bool Cycle();
+
+
 	private:
 		TwoBytes FetchInstruction();
-		void ExecuteInstruction(const TwoBytes instruction);
+		bool ExecuteInstruction(const TwoBytes instruction);
 
 	private:
 		Cpu cpu {};
