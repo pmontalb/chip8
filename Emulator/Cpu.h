@@ -81,7 +81,7 @@ namespace emu
 		void ConditionalSkip(const bool condition);
 		void SubtractRegisters(const Byte regOut, const Byte reg1, const Byte reg2);
 
-	private:
+	protected:
 		// 16 bits because it has to hold the max memory address (0xFFF)
 		TwoBytes _programCounter = 0;	// program counter
 		TwoBytes _indexRegister = 0;		// index register

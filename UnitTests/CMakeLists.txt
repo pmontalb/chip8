@@ -10,6 +10,15 @@ create_library(
 
 create_test(
 	NAME
+		ringBufferTests
+	SOURCES
+		RingBufferTests.cpp
+	DEPENDENCIES
+		testMain
+)
+
+create_test(
+	NAME
 		keypadTests
 	SOURCES
 		KeypadTests.cpp
@@ -42,6 +51,15 @@ create_test(
 		DisplayTests.cpp
 	DEPENDENCIES
 		testMain Display
+)
+
+create_test(
+	NAME
+		cpuTests
+	SOURCES
+		CpuTests.cpp
+	DEPENDENCIES
+		testMain Cpu
 )
 
 create_test(

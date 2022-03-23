@@ -2,8 +2,8 @@
 	path = cmake
 	url = git@github.com:pmontalb/CmakeUtilities.git
 [submodule "mahi-gui"]
-	path = mahi-gui
+	path = Submodules/mahi-gui
 	url = git@github.com:mahilab/mahi-gui.git
 [submodule "spdlog"]
-	path = spdlog
+	path = Submodules/spdlog
 	url = git@github.com:gabime/spdlog.git
