@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 #include <bitset>
 
-struct TestKeyPad: public emu::IKeypad
+struct TestKeyPad final: public emu::IKeypad
 {
 	std::bitset<emu::Keys::END> toggle {};
 
@@ -17,7 +17,7 @@ struct TestKeyPad: public emu::IKeypad
 	void Press(const emu::Keys::Enum code, const bool toggle_) override { toggle[code] = toggle_;}
 };
 
-struct TestRam: public emu::IRam
+struct TestRam final: public emu::IRam
 {
 	std::vector<emu::Byte> data;
 	std::vector<emu::Byte> fonts;
@@ -41,6 +41,12 @@ struct TestRam: public emu::IRam
 		for (size_t i = 0; i <= nElems; ++i)
 			dest[i] = data[i + idx];
 	}
+};
+
+struct TestRng final: public emu::IRng
+{
+	emu::Byte totallyRandomNumber = 42;
+	[[nodiscard]] emu::Byte Next() override { return totallyRandomNumber; }
 };
 
 struct Cpu: public emu::Cpu
@@ -373,4 +379,299 @@ TEST_F(CpuTests, StoreBinaryCodeRepresentation)
 	ASSERT_EQ(ram.data[cpu._indexRegister + 0], 1);
 	for (size_t i = 0; i < cpu._indexRegister; ++i)
 		ASSERT_EQ(ram.data[i], 0);
+}
+
+TEST_F(CpuTests, StoreRegistersInRam)
+{
+	TestRam ram;
+	ram.data.resize(64);
+	for (size_t i = 0; i < ram.data.size(); ++i)
+		ram.data[i] = 42;
+
+	Cpu cpu;
+	cpu._indexRegister = 7;
+
+	for (size_t i = 0; i < cpu._registers.size(); ++i)
+		cpu._registers[i] = i * i;
+
+	emu::TwoBytes instruction = 0xDCAE;
+
+	cpu.StoreRegistersInRam(instruction, ram);
+
+	for (size_t i = 0; i <= 0xC; ++i)
+		ASSERT_EQ(cpu._registers[i], ram.data[cpu._indexRegister + i]);
+	for (size_t i = 0xC + 1; i < ram.data.size() - cpu._indexRegister; ++i)
+		ASSERT_EQ(ram.data[cpu._indexRegister + i], 42);
+}
+
+TEST_F(CpuTests, AddEqualByte)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 42;
+	cpu.AddEqualByte(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 42 + 0xAE);
+}
+TEST_F(CpuTests, IndexRegisterAddEqualRegister)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 42;
+	cpu._indexRegister = 64;
+	cpu.IndexRegisterAddEqualRegister(instruction);
+	ASSERT_EQ(cpu._indexRegister, 42 + 64);
+}
+TEST_F(CpuTests, OrEqualRegister)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 0x0A;
+	cpu._registers[0xA] = 0xA0;
+	cpu.OrEqualRegister(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0xAA);
+
+	cpu._registers[0x9] = 0xAA;
+	cpu._registers[0xA] = 0xA0;
+	cpu.OrEqualRegister(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0xAA);
+}
+TEST_F(CpuTests, AndEqualRegister)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 0xAA;
+	cpu._registers[0xA] = 0xA0;
+	cpu.AndEqualRegister(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0xA0);
+}
+TEST_F(CpuTests, XorEqualRegister)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 0x0A;
+	cpu._registers[0xA] = 0xA0;
+	cpu.XorEqualRegister(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0xAA);
+
+	cpu._registers[0x9] = 0xAA;
+	cpu._registers[0xA] = 0xA0;
+	cpu.XorEqualRegister(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x0A);
+}
+TEST_F(CpuTests, AddRegistersAndStoreLastByte)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 0x1;
+	cpu._registers[0xA] = 0x2;
+	cpu.AddRegistersAndStoreLastByte(instruction);
+	ASSERT_EQ(cpu._registers.back(), 0);
+	ASSERT_EQ(cpu._registers[0x9], 0x1 + 0x2);
+
+	cpu._registers[0x9] = 0xFA;
+	cpu._registers[0xA] = 0xFF;
+	cpu.AddRegistersAndStoreLastByte(instruction);
+
+	// 0xFA + 0xFF = 0x1F9
+	ASSERT_EQ(cpu._registers.back(), 1);
+	ASSERT_EQ(cpu._registers[0x9], 0xF9);
+}
+
+TEST_F(CpuTests, SubtractEqualRegisters)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 0xA0;
+	cpu._registers[0xA] = 0x0A;
+	cpu.SubtractEqualRegisters(instruction);
+
+	// we store the not borrow here
+	ASSERT_EQ(cpu._registers.back(), 1);
+	ASSERT_EQ(cpu._registers[0x9], 0x96);
+
+	cpu._registers[0x9] = 0x0A;
+	cpu._registers[0xA] = 0xA0;
+	cpu.SubtractEqualRegisters(instruction);
+	ASSERT_EQ(cpu._registers.back(), 0);
+
+	// 0x0A - 0xA0 = -0x96 = 0x100 - 0x96 = 0x6A
+	ASSERT_EQ(cpu._registers[0x9], 0x6A);
+}
+TEST_F(CpuTests, OppositeSubtractRegisters)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 0xA0;
+	cpu._registers[0xA] = 0x0A;
+	cpu.OppositeSubtractRegisters(instruction);
+
+	// 0x0A - 0xA0 = -0x96 = 0x100 - 0x96 = 0x6A
+	ASSERT_EQ(cpu._registers.back(), 0);
+	ASSERT_EQ(cpu._registers[0x9], 0x6A);
+
+	cpu._registers[0x9] = 0x0A;
+	cpu._registers[0xA] = 0xA0;
+	cpu.OppositeSubtractRegisters(instruction);
+	// we store the not borrow here
+	ASSERT_EQ(cpu._registers.back(), 1);
+	ASSERT_EQ(cpu._registers[0x9], 0x96);
+}
+
+TEST_F(CpuTests, ShiftRightAndStoreLastBit)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 0xA1;
+	cpu.ShiftRightAndStoreLastBit(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x50);
+	ASSERT_EQ(cpu._registers.back(), 1);
+
+	cpu._registers[0x9] = 0x0C;
+	cpu.ShiftRightAndStoreLastBit(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x06);
+	ASSERT_EQ(cpu._registers.back(), 0);
+
+	cpu._registers[0x9] = 0x0B;
+	cpu.ShiftRightAndStoreLastBit(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x05);
+	ASSERT_EQ(cpu._registers.back(), 1);
+
+	cpu._registers[0x9] = 0x1B;
+	cpu.ShiftRightAndStoreLastBit(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x0D);
+	ASSERT_EQ(cpu._registers.back(), 1);
+
+	cpu._registers[0x9] = 0x1;
+	cpu.ShiftRightAndStoreLastBit(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x00);
+	ASSERT_EQ(cpu._registers.back(), 1);
+
+	cpu._registers[0x9] = 0x0;
+	cpu.ShiftRightAndStoreLastBit(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x00);
+	ASSERT_EQ(cpu._registers.back(), 0);
+}
+TEST_F(CpuTests, ShiftLeftAndStoreFirstBit)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+
+	cpu._registers[0x9] = 0x0A;
+	cpu.ShiftLeftAndStoreFirstBit(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x14);
+	ASSERT_EQ(cpu._registers.back(), 0);
+
+	cpu._registers[0x9] = 0x1;
+	cpu.ShiftLeftAndStoreFirstBit(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x02);
+	ASSERT_EQ(cpu._registers.back(), 0);
+
+	cpu._registers[0x9] = 0x0;
+	cpu.ShiftLeftAndStoreFirstBit(instruction);
+	ASSERT_EQ(cpu._registers[0x9], 0x00);
+	ASSERT_EQ(cpu._registers.back(), 0);
+}
+
+TEST_F(CpuTests, SetIndexRegister)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+	cpu._indexRegister = 7;
+	cpu.SetIndexRegister(instruction);
+	ASSERT_EQ(cpu._indexRegister, 0x9AE);
+}
+
+TEST_F(CpuTests, JumpToLastTwelveBitsPlusFirstRegister)
+{
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+	cpu._registers[0] = 0x70;
+	cpu.JumpToLastTwelveBitsPlusFirstRegister(instruction);
+	ASSERT_EQ(cpu.GetProgramCounter(), cpu._registers[0] + 0x9AE);
+}
+
+TEST_F(CpuTests, RandomAndEqualByte)
+{
+	TestRng rng;
+	rng.totallyRandomNumber = 0xA0;
+	Cpu cpu;
+	emu::TwoBytes instruction = 0xD9AE;
+	cpu.RandomAndEqualByte(instruction, rng);
+
+	ASSERT_EQ(cpu._registers[0x9], 0xA0);
+}
+
+TEST_F(CpuTests, Draw)
+{
+	Cpu cpu;
+	ASSERT_FALSE(true);
+}
+
+TEST_F(CpuTests, WaitUntilKeyIsPressed)
+{
+	Cpu cpu;
+	cpu._programCounter = 42;
+
+	TestKeyPad testKeyPad;
+	testKeyPad.toggle.reset();
+
+	emu::TwoBytes instruction = 0xD9AE;
+	cpu.WaitUntilKeyIsPressed(instruction, testKeyPad);
+	ASSERT_EQ(cpu._programCounter, 40);  // still waiting
+
+	testKeyPad.toggle[emu::Keys::Seven] = true;
+	cpu.WaitUntilKeyIsPressed(instruction, testKeyPad);
+	ASSERT_EQ(cpu._programCounter, 40);  // success
+	cpu._registers[0x9] = emu::Keys::Seven;
+
+	// take first one
+	testKeyPad.toggle.reset();
+	testKeyPad.toggle[emu::Keys::Seven] = true;
+	testKeyPad.toggle[emu::Keys::Eight] = true;
+	cpu.WaitUntilKeyIsPressed(instruction, testKeyPad);
+	ASSERT_EQ(cpu._programCounter, 40);  // success
+	cpu._registers[0x9] = std::min(emu::Keys::Seven, emu::Keys::Eight);
+
+	// all pressed (same as before
+	testKeyPad.toggle.set();
+	cpu.WaitUntilKeyIsPressed(instruction, testKeyPad);
+	ASSERT_EQ(cpu._programCounter, 40);  // success
+	cpu._registers[0x9] = emu::Keys::START;
+}
+
+TEST_F(CpuTests, DecrementTimers)
+{
+	Cpu cpu;
+	cpu._soundTimer = 42;
+	cpu._delayTimer = 24;
+	cpu.DecrementTimers();
+	ASSERT_EQ(cpu._soundTimer, 41);
+	ASSERT_EQ(cpu._delayTimer, 23);
+
+	cpu._soundTimer = 0;
+	cpu._delayTimer = 24;
+	cpu.DecrementTimers();
+	ASSERT_EQ(cpu._soundTimer, 0);
+	ASSERT_EQ(cpu._delayTimer, 23);
+
+	cpu._soundTimer = 42;
+	cpu._delayTimer = 0;
+	cpu.DecrementTimers();
+	ASSERT_EQ(cpu._soundTimer, 41);
+	ASSERT_EQ(cpu._delayTimer, 0);
+
+	cpu._soundTimer = 0;
+	cpu._delayTimer = 0;
+	cpu.DecrementTimers();
+	ASSERT_EQ(cpu._soundTimer, 0);
+	ASSERT_EQ(cpu._delayTimer, 0);
 }

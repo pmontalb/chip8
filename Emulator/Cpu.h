@@ -63,8 +63,9 @@ namespace emu
 
 		void AddRegistersAndStoreLastByte(const TwoBytes instruction);
 		void SubtractEqualRegisters(const TwoBytes instruction);
-		void ShiftRightAndStoreLastBit(const TwoBytes instruction);
 		void OppositeSubtractRegisters(const TwoBytes instruction);
+
+		void ShiftRightAndStoreLastBit(const TwoBytes instruction);
 		void ShiftLeftAndStoreFirstBit(const TwoBytes instruction);
 
 		void SetIndexRegister(const TwoBytes instruction);

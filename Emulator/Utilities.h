@@ -27,12 +27,12 @@ namespace utils
 	}	 // namespace detail
 	static constexpr emu::TwoBytes LowerTwelveBits(const emu::TwoBytes instruction)
 	{
-		constexpr emu::TwoBytes mask = 0xFFFu;
+		constexpr emu::TwoBytes mask = 0x0FFFu;
 		return detail::Mask(instruction, mask);
 	}
 	static constexpr emu::Byte LowestFourBits(const emu::TwoBytes instruction)
 	{
-		constexpr emu::TwoBytes mask = 0x00Fu;
+		constexpr emu::TwoBytes mask = 0x000Fu;
 		const auto maskedValue = detail::Mask(instruction, mask);
 
 		// to be able to compare the masked values with other bytes, we have to shift it down by 8 bits
@@ -41,7 +41,7 @@ namespace utils
 	}
 	static constexpr emu::Byte LowerFourBitsHighByte(const emu::TwoBytes instruction)
 	{
-		constexpr emu::TwoBytes mask = 0xF00u;
+		constexpr emu::TwoBytes mask = 0x0F00u;
 		const auto maskedValue = detail::Mask(instruction, mask);
 
 		// to be able to compare the masked values with other bytes, we have to shift it down by 8 bits
@@ -59,19 +59,19 @@ namespace utils
 	}
 	static constexpr emu::Byte LowestByte(const emu::TwoBytes instruction)
 	{
-		constexpr emu::TwoBytes mask = 0x0FFu;
+		constexpr emu::TwoBytes mask = 0x00FFu;
 		return detail::Mask(instruction, mask);
 	}
 	// least significant
 	static constexpr emu::Byte LastBit(const emu::TwoBytes instruction)
 	{
-		constexpr emu::TwoBytes mask = 0x001u;
+		constexpr emu::TwoBytes mask = 0x0001u;
 		return detail::Mask(instruction, mask);
 	}
 	// most significant
 	static constexpr emu::Byte FirstBit(const emu::TwoBytes instruction)
 	{
-		constexpr emu::TwoBytes mask = 0x080u;
+		constexpr emu::TwoBytes mask = 0x0080u;
 		const auto maskedValue = detail::Mask(instruction, mask);
 
 		// to be able to compare the masked values with other bytes, we have to shift it down by 7 bits
@@ -85,7 +85,7 @@ namespace utils
 		constexpr emu::Byte maxShift = 8;
 		static_assert(index < maxShift);
 
-		constexpr emu::TwoBytes mask = 0x080u >> index;
+		constexpr emu::TwoBytes mask = 0x0080u >> index;
 		return detail::Mask(instruction, mask);
 	}
 }	 // namespace utils
