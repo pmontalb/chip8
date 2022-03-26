@@ -1,44 +1,61 @@
 
-#include <Mahi/Gui.hpp>
+#include "IgnoreWarning.h"
 
-#include "spdlog/sinks/base_sink.h"
-#include "spdlog/sinks/stdout_sinks.h"
-#include "spdlog/spdlog.h"
+#ifdef __clang__
+#define __IGNORE_MAHI_GUI_WARNINGS__ \
+	__IGNORE_WARNING__("-Wsign-conversion") \
+	__IGNORE_WARNING__("-Wfloat-equal")  \
+	__IGNORE_WARNING__("-Wold-style-cast") \
+	__IGNORE_WARNING__("-Wdouble-promotion") \
+	__IGNORE_WARNING__("-Wnewline-eof")    \
+	__IGNORE_WARNING__("-Wdocumentation-unknown-command") \
+	__IGNORE_WARNING__("-Wdocumentation")\
+	__IGNORE_WARNING__("-Wgnu-anonymous-struct")    \
+	__IGNORE_WARNING__("-Wnested-anon-types")       \
+	__IGNORE_WARNING__("-Wunused-parameter")\
+	__IGNORE_WARNING__("-Wmissing-braces")  \
+	__IGNORE_WARNING__("-Wnon-virtual-dtor")\
+	__IGNORE_WARNING__("-Wundef")        \
+	__IGNORE_WARNING__("-Wimplicit-float-conversion") \
+	__IGNORE_WARNING__("-Wimplicit-int-float-conversion")          \
+	__IGNORE_WARNING__("-Wzero-as-null-pointer-constant") \
+	__IGNORE_WARNING__("-Wdeprecated-copy-dtor")    \
+	__IGNORE_WARNING__("-Wextra-semi")   \
+	__IGNORE_WARNING__("-Wundefined-func-template") \
+	__IGNORE_WARNING__("-Wshadow-field-in-constructor")
+#else
+#define __IGNORE_MAHI_GUI_WARNINGS__ \
+	__IGNORE_WARNING__("-Wshadow")       \
+	__IGNORE_WARNING__("-Wfloat-equal")  \
+	__IGNORE_WARNING__("-Wold-style-cast") \
+	__IGNORE_WARNING__("-Wpedantic")     \
+	__IGNORE_WARNING__("-Wunused-parameter") \
+	__IGNORE_WARNING__("-Weffc++")       \
+	__IGNORE_WARNING__("-Wnon-virtual-dtor") \
+	__IGNORE_WARNING__("-Wconversion")   \
+	__IGNORE_WARNING__("-Wuseless-cast") \
+	__IGNORE_WARNING__("-Wextra-semi")   \
+	__IGNORE_WARNING__("-Wsuggest-override") \
+	__IGNORE_WARNING__("-Wctor-dtor-privacy")\
+	__IGNORE_WARNING__("-Wuseless-cast") \
+	__IGNORE_WARNING__("-Wdeprecated")  \
+    __IGNORE_WARNING__("-Wredundant-tags")\
+	__IGNORE_WARNING__("-Wdouble-promotion")
+#endif
+
+__START_IGNORING_WARNINGS__
+__IGNORE_MAHI_GUI_WARNINGS__
+#include <Mahi/Gui.hpp>
+__STOP_IGNORING_WARNINGS__
 
 #define LOGGER_NAME "ringBuffer"
-#include "Emulator/Chip8.h"
 #include "Emulator/Logging.h"
+
+#include "Emulator/Chip8.h"
 #include "Emulator/RingBuffer.h"
 
 #include <mutex>
 #include <thread>
-
-namespace detail
-{
-	template<typename Mutex>
-	class RingBufferSink final: public spdlog::sinks::base_sink<Mutex>
-	{
-	public:
-		auto& GetRingBuffer() { return _ringBuffer; }
-
-	protected:
-		void sink_it_(const spdlog::details::log_msg& msg) override
-		{
-			spdlog::memory_buf_t formatted;
-			spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-
-			_ringBuffer.Add(std::make_pair(msg.level, fmt::to_string(formatted)));
-		}
-
-		void flush_() override {}
-
-	private:
-		static constexpr auto ringbufferSize = 64;
-		utils::RingBuffer<std::pair<spdlog::level::level_enum, std::string>, ringbufferSize> _ringBuffer {};
-	};
-}	 // namespace detail
-using RingBufferSinkSt = detail::RingBufferSink<spdlog::details::null_mutex>;
-using RingBufferSinkMt = detail::RingBufferSink<std::mutex>;
 
 static const std::unordered_map<spdlog::level::level_enum, mahi::gui::Color> logColors = {
 	{ spdlog::level::trace, mahi::gui::Greens::LimeGreen },	{ spdlog::level::debug, mahi::gui::Greens::LightGreen },
@@ -48,7 +65,7 @@ static const std::unordered_map<spdlog::level::level_enum, mahi::gui::Color> log
 
 static auto RegisterRingBufferSink()
 {
-	auto rbSink = std::make_shared<RingBufferSinkSt>();
+	auto rbSink = std::make_shared<utils::RingBufferSinkSt>();
 	std::vector<spdlog::sink_ptr> sinks;
 	sinks.push_back(std::make_shared<spdlog::sinks::stdout_sink_st>());
 	sinks.push_back(rbSink);
@@ -103,7 +120,7 @@ static inline emu::Keys::Enum GetKeyPressed()
 
 static void ShowExampleMenuFile()
 {
-	ImGui::MenuItem("(demo menu)", NULL, false, false);
+	ImGui::MenuItem("(demo menu)", nullptr, false, false);
 	if (ImGui::MenuItem("New"))
 	{
 	}
@@ -157,9 +174,9 @@ static void ShowExampleMenuFile()
 		float sz = ImGui::GetTextLineHeight();
 		for (int i = 0; i < ImGuiCol_COUNT; i++)
 		{
-			const char* name = ImGui::GetStyleColorName((ImGuiCol)i);
+			const char* name = ImGui::GetStyleColorName(i);
 			ImVec2 p = ImGui::GetCursorScreenPos();
-			ImGui::GetWindowDrawList()->AddRectFilled(p, ImVec2(p.x + sz, p.y + sz), ImGui::GetColorU32((ImGuiCol)i));
+			ImGui::GetWindowDrawList()->AddRectFilled(p, ImVec2(p.x + sz, p.y + sz), ImGui::GetColorU32(i));
 			ImGui::Dummy(ImVec2(sz, sz));
 			ImGui::SameLine();
 			ImGui::MenuItem(name);
@@ -181,7 +198,7 @@ static void ShowExampleMenuFile()
 	{
 		IM_ASSERT(0);
 	}
-	if (ImGui::MenuItem("Checked", NULL, true))
+	if (ImGui::MenuItem("Checked", nullptr, true))
 	{
 	}
 	if (ImGui::MenuItem("Quit", "Alt+F4"))
@@ -204,13 +221,16 @@ static void HelpMarker(const char* desc)
 	}
 }
 
+__START_IGNORING_WARNINGS__
+__IGNORE_WARNING__("-Wnon-virtual-dtor")
 class ChipEightEmulator: public mahi::gui::Application
 {
 public:
-	explicit ChipEightEmulator(const mahi::gui::Application::Config& config, std::shared_ptr<RingBufferSinkSt> sink)
+	explicit ChipEightEmulator(const mahi::gui::Application::Config& config, std::shared_ptr<utils::RingBufferSinkSt> sink)
 		: Application(config), _sink(sink)
 	{
 	}
+	virtual ~ChipEightEmulator() = default;
 
 private:
 	// Override update (called once per frame)
@@ -311,9 +331,6 @@ private:
 		if (no_docking)
 			window_flags |= ImGuiWindowFlags_NoDocking;
 
-
-		static bool open = true;
-
 		// Main body of the Demo window starts here.
 		if (!ImGui::Begin("Dear ImGui Demo", &open, window_flags))
 		{
@@ -364,26 +381,26 @@ private:
 			}
 			if (ImGui::BeginMenu("Examples"))
 			{
-				ImGui::MenuItem("Main menu bar", NULL, &show_app_main_menu_bar);
-				ImGui::MenuItem("Console", NULL, &show_app_console);
-				ImGui::MenuItem("Log", NULL, &show_app_log);
-				ImGui::MenuItem("Simple layout", NULL, &show_app_layout);
-				ImGui::MenuItem("Property editor", NULL, &show_app_property_editor);
-				ImGui::MenuItem("Long text display", NULL, &show_app_long_text);
-				ImGui::MenuItem("Auto-resizing window", NULL, &show_app_auto_resize);
-				ImGui::MenuItem("Constrained-resizing window", NULL, &show_app_constrained_resize);
-				ImGui::MenuItem("Simple overlay", NULL, &show_app_simple_overlay);
-				ImGui::MenuItem("Manipulating window titles", NULL, &show_app_window_titles);
-				ImGui::MenuItem("Custom rendering", NULL, &show_app_custom_rendering);
-				ImGui::MenuItem("Dockspace", NULL, &show_app_dockspace);
-				ImGui::MenuItem("Documents", NULL, &show_app_documents);
+				ImGui::MenuItem("Main menu bar", nullptr, &show_app_main_menu_bar);
+				ImGui::MenuItem("Console", nullptr, &show_app_console);
+				ImGui::MenuItem("Log", nullptr, &show_app_log);
+				ImGui::MenuItem("Simple layout", nullptr, &show_app_layout);
+				ImGui::MenuItem("Property editor", nullptr, &show_app_property_editor);
+				ImGui::MenuItem("Long text display", nullptr, &show_app_long_text);
+				ImGui::MenuItem("Auto-resizing window", nullptr, &show_app_auto_resize);
+				ImGui::MenuItem("Constrained-resizing window", nullptr, &show_app_constrained_resize);
+				ImGui::MenuItem("Simple overlay", nullptr, &show_app_simple_overlay);
+				ImGui::MenuItem("Manipulating window titles", nullptr, &show_app_window_titles);
+				ImGui::MenuItem("Custom rendering", nullptr, &show_app_custom_rendering);
+				ImGui::MenuItem("Dockspace", nullptr, &show_app_dockspace);
+				ImGui::MenuItem("Documents", nullptr, &show_app_documents);
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Tools"))
 			{
-				ImGui::MenuItem("Metrics/Debugger", NULL, &show_app_metrics);
-				ImGui::MenuItem("Style Editor", NULL, &show_app_style_editor);
-				ImGui::MenuItem("About Dear ImGui", NULL, &show_app_about);
+				ImGui::MenuItem("Metrics/Debugger", nullptr, &show_app_metrics);
+				ImGui::MenuItem("Style Editor", nullptr, &show_app_style_editor);
+				ImGui::MenuItem("About Dear ImGui", nullptr, &show_app_about);
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenuBar();
@@ -439,7 +456,7 @@ private:
 				{
 					// The "NoMouse" option can get us stuck with a disabled mouse! Let's provide an alternative way to
 					// fix it:
-					if (fmodf((float)ImGui::GetTime(), 0.40f) < 0.20f)
+					if (fmodf(static_cast<float>(ImGui::GetTime()), 0.40f) < 0.20f)
 					{
 						ImGui::SameLine();
 						ImGui::Text("<<PRESS SPACE TO DISABLE>>");
@@ -608,11 +625,12 @@ private:
 	}
 
 private:
-	std::shared_ptr<RingBufferSinkSt> _sink;
+	std::shared_ptr<utils::RingBufferSinkSt> _sink{};
 	bool open = true;
-	emu::Chip8 _emulator;
-	ImGuiTextFilter filter;
+	emu::Chip8 _emulator{};
+	ImGuiTextFilter filter{};
 };
+__STOP_IGNORING_WARNINGS__
 
 int main(int /*argc*/, char** /*argv*/)
 {

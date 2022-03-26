@@ -67,7 +67,7 @@ namespace emu
 					 _programCounter,
 					 _stack[_stackPointer + 1],
 					 _programCounter);
-		_stack[_stackPointer++] = _programCounter;
+		_stack[_stackPointer++] = static_cast<Byte>(_programCounter);
 
 		SetProgramCounter(utils::LowerTwelveBits(instruction));
 	}
@@ -176,7 +176,7 @@ namespace emu
 		auto value = _registers[Vx];
 		LOG_TRACE("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) bcd({1:d}|{1:X})", Vx, _registers[Vx], value);
 
-		constexpr auto base = 10;
+		constexpr Byte base = 10;
 		// units
 		ram.SetAt(_indexRegister + 2, value % base);
 		value /= base;
@@ -282,7 +282,7 @@ namespace emu
 		_registers.back() = utils::LastBit(_registers[Vx]);
 
 		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) >> 1 = {2:d}|{2:X} lastBit({2:d}|{2:X}) ", Vx, _registers[Vx], _registers[Vx] >> 1, _registers.back());
-		_registers[Vx] >>= 1;
+		_registers[Vx] = static_cast<Byte>(_registers[Vx] >> 1);
 	}
 	void Cpu::ShiftLeftAndStoreFirstBit(const TwoBytes instruction)
 	{
@@ -290,7 +290,7 @@ namespace emu
 		_registers.back() = utils::FirstBit(_registers[Vx]);
 
 		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) << 1 = {2:d}|{2:X} lastBit({2:d}|{2:X}) ", Vx, _registers[Vx], _registers[Vx] << 1, _registers.back());
-		_registers[Vx] <<= 1;
+		_registers[Vx] = static_cast<Byte>(_registers[Vx] << 1);
 	}
 
 	void Cpu::SetIndexRegister(const TwoBytes instruction)
@@ -337,8 +337,8 @@ namespace emu
 					 Vx, _registers[Vx], Vy, _registers[Vy], n, _registers.back());
 
 		// wrap x and y
-		Byte xCoord = _registers[Vx] % display.GetWidth();
-		Byte yCoord = _registers[Vy] % display.GetHeight();
+		const auto xCoord = static_cast<Byte>(_registers[Vx] % display.GetWidth());
+		const auto yCoord = static_cast<Byte>(_registers[Vy] % display.GetHeight());
 		LOG_TRACE("width({0}) height({1}) xCoord({2:d}|{2:X}) yCoord({3:d}|{3:X})",
 					 display.GetWidth(), display.GetHeight(), xCoord, yCoord);
 
@@ -348,12 +348,16 @@ namespace emu
 			const auto sprite = ram.GetAt(_indexRegister + row);
 			LOG_TRACE("index({0:d}|{0:X}) row({1}) sprite({2:d}|{2:X})", _indexRegister, row, sprite);
 
+			// iterate over the single bit of the sprite
 			utils::constexprFor<0, colSize>(
 				[&](const auto col)
 				{
-					uint8_t spritePixel = utils::GetBitAt<col>(sprite);
+					const auto spritePixel = utils::GetBitAt<col>(sprite);
 
 					// Sprite pixel is on
+					// https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
+					// the way pixels are drawn in the chip8 emulator is that 0 bits are transparent
+					// *** they do not indicate the display is off ***
 					if (!spritePixel)
 					{
 						LOG_TRACE("row({}) col({}) spritePixel is off", row, col);
@@ -364,12 +368,8 @@ namespace emu
 					assert(coord < display.GetWidth() * display.GetHeight());
 
 					const auto screenIsOn = display.GetAt(coord);
-					if (screenIsOn)
-					{
-						LOG_TRACE("row({}) col({}) coord({}) screen=ON: collision", row, col, coord);
-						// collision detected: need to store 1 in VF
-						_registers.back() = 1;
-					}
+					_registers.back() = static_cast<Byte>(_registers.back() | screenIsOn);
+					LOG_TRACE("row({}) col({}) coord({}) screen=ON: {} collision", row, col, coord, screenIsOn ? "" : "no");
 
 					// Effectively XOR with the sprite pixel
 					LOG_DEBUG("row({}) col({}) coord({}) screen=OFF: turning on", row, col, coord);

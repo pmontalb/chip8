@@ -19,6 +19,15 @@ create_test(
 
 create_test(
 	NAME
+		utilityTests
+	SOURCES
+		UtilityTests.cpp
+	DEPENDENCIES
+		testMain
+)
+
+create_test(
+	NAME
 		keypadTests
 	SOURCES
 		KeypadTests.cpp

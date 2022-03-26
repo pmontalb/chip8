@@ -12,10 +12,7 @@ namespace utils
 	public:
 		[[nodiscard]] constexpr std::size_t MaxSize() const { return N; }
 
-		[[nodiscard]] std::size_t Size() const
-		{
-			return _size;
-		}
+		[[nodiscard]] std::size_t Size() const { return _size; }
 
 		template<typename S>
 		void PushBack(S&& item)
@@ -32,7 +29,7 @@ namespace utils
 		{
 			assert(Size() > 0);
 
-			auto item = std::exchange(_data[_head], T{});
+			auto item = std::exchange(_data[_head], T {});
 
 			++_head;
 			if (_head >= MaxSize())
@@ -55,10 +52,10 @@ namespace utils
 			_size = 0;
 			_head = 0;
 			_tail = 0;
-			std::fill(_data.begin(), _data.end(), T{});
+			std::fill(_data.begin(), _data.end(), T {});
 		}
 
-		T& operator[](const size_t i)
+		T& operator[](const std::size_t i)
 		{
 			assert(Size() > 0);
 			if (_tail > _head)
@@ -71,17 +68,15 @@ namespace utils
 			assert(_head + i - MaxSize() <= _tail);
 			return _data[_head + i - MaxSize()];
 		}
-		const T& operator[](const size_t i) const
-		{
-			return this->operator[](i);
-		}
+		const T& operator[](const std::size_t i) const { return this->operator[](i); }
 
 		T& Front() { return this->operator[](0); }
 		T& Back() { return this->operator[](Size() - 1); }
+
 	private:
 		std::array<T, N> _data {};
 		std::size_t _head = 0;
 		std::size_t _tail = 0;
 		std::size_t _size = 0;
 	};
-}
+}	 // namespace utils

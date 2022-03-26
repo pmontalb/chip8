@@ -27,7 +27,7 @@ namespace emu
 
 	private:
 		Cpu cpu {};
-		Rng rng;
+		Rng rng {};
 		Ram ram {};
 		Display display {};
 		Keypad keypad {};

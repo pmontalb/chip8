@@ -30,13 +30,13 @@ namespace emu
 
 		// Get size of file and allocate a buffer to hold the contents
 		std::string buffer;
-		buffer.resize(file.tellg());
+		buffer.resize(static_cast<std::size_t>(file.tellg()));
 		LOG_TRACE("buffer size({})", buffer.size());
 		assert(buffer.size() < ram.GetSize() - Ram::instructionStart);
 
 		// Go back to the beginning of the file and fill the buffer
 		file.seekg(0, std::ios::beg);
-		file.read(buffer.data(), buffer.size());
+		file.read(buffer.data(), static_cast<long>(buffer.size()));
 
 		ram.Load(buffer);
 
@@ -68,12 +68,12 @@ namespace emu
 
 		// the upper bits come from memByte the lowest bit from nextMemByte
 		static constexpr TwoBytes byteShift = 8;
-		const TwoBytes topPart = memByte << byteShift;
+		const auto topPart = static_cast<TwoBytes>(memByte << byteShift);
 
 		LOG_DEBUG("pc({0}) ram=({1:d}|{1:X}) nextRam=({2:d}|{2:X}) instruction({3:d}|{3:X})",
 					 pc, memByte, nextMemByte, topPart | nextMemByte);
 
-		return topPart | nextMemByte;
+		return static_cast<TwoBytes>(topPart | nextMemByte);
 	}
 
 	bool Chip8::ExecuteInstruction(const TwoBytes instruction)
@@ -121,7 +121,7 @@ namespace emu
 		 * */
 
 		// zero out the first 3 nibbles and shift it down by 12 bits
-		const Byte mostSignificantBit = (instruction & 0xF000ul) >> 12ul;
+		const auto mostSignificantBit = static_cast<Byte>((instruction & 0xF000ul) >> 12ul);
 		LOG_TRACE("instruction({0:d}|{0:X}): msb({1:d}|{1:X})", instruction, mostSignificantBit);
 
 		switch (mostSignificantBit)

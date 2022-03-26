@@ -12,7 +12,7 @@ namespace emu
 
 	public:
 		[[nodiscard]] bool IsPressed(const Keys::Enum keyCode) const override { return _data[keyCode]; }
-		[[nodiscard]] Byte GetSize() const override { return _data.size(); };
+		[[nodiscard]] Byte GetSize() const override { return static_cast<Byte>(_data.size()); }
 		void Press(const Keys::Enum keyCode, const bool toggle) override;
 
 	private:

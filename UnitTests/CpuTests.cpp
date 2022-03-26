@@ -1,30 +1,32 @@
 
 #include "Emulator/Cpu.h"
+#include "Emulator/Interfaces/IDisplay.h"
 #include "Emulator/Interfaces/IKeypad.h"
 #include "Emulator/Interfaces/IRam.h"
 #include "Emulator/Interfaces/IRng.h"
-#include "Emulator/Interfaces/IDisplay.h"
 
-#include <gtest/gtest.h>
+#include "Emulator/Logging.h"
+
 #include <bitset>
+#include <gtest/gtest.h>
 
 struct TestKeyPad final: public emu::IKeypad
 {
 	std::bitset<emu::Keys::END> toggle {};
 
 	[[nodiscard]] bool IsPressed(const emu::Keys::Enum code) const override { return toggle[code]; }
-	[[nodiscard]] virtual emu::Byte GetSize() const override { return 0; }
-	void Press(const emu::Keys::Enum code, const bool toggle_) override { toggle[code] = toggle_;}
+	[[nodiscard]] emu::Byte GetSize() const override { return 0; }
+	void Press(const emu::Keys::Enum code, const bool toggle_) override { toggle[code] = toggle_; }
 };
 
 struct TestRam final: public emu::IRam
 {
-	std::vector<emu::Byte> data;
-	std::vector<emu::Byte> fonts;
+	std::vector<emu::Byte> data {};
+	std::vector<emu::Byte> fonts {};
 
 	[[nodiscard]] std::size_t GetSize() const override { return data.size(); }
 
-	void Load(const std::string&) override {}
+	void Load(const std::string& /*buffer*/) override {}
 
 	[[nodiscard]] emu::Byte GetAt(const std::size_t index) const override { return data.at(index); }
 	void SetAt(const std::size_t index, const emu::Byte value) override { data[index] = value; }
@@ -47,6 +49,31 @@ struct TestRng final: public emu::IRng
 {
 	emu::Byte totallyRandomNumber = 42;
 	[[nodiscard]] emu::Byte Next() override { return totallyRandomNumber; }
+};
+
+struct TestDisplay final: public emu::IDisplay
+{
+	using Width = std::size_t;
+	using Height = std::size_t;
+	TestDisplay(const Width width, const Height height) : _width(width), _height(height) { Clear(); }
+
+	[[nodiscard]] std::size_t GetWidth() const override { return _width; }
+	[[nodiscard]] std::size_t GetHeight() const override { return _height; }
+	void Clear() override { _pixels.assign(_width * _height, false); }
+
+	void Reset() override {}
+	[[nodiscard]] bool HasChanged() const override { return false; }
+
+	// coord = (x % width) + (y % height) * width
+	[[nodiscard]] bool GetAt(const std::size_t coord) const override { return _pixels.at(coord); }
+	void FlipAt(const std::size_t coord) override { _pixels.at(coord).flip(); }
+
+	auto& GetPixels() { return _pixels; }
+
+private:
+	std::vector<bool> _pixels {};
+	const size_t _width;
+	const size_t _height;
 };
 
 struct Cpu: public emu::Cpu
@@ -109,7 +136,13 @@ TEST_F(CpuTests, AdvanceProgramCounter)
 
 #ifndef NDEBUG
 	cpu._programCounter = std::numeric_limits<emu::TwoBytes>::max() - 1;
+
+	__START_IGNORING_WARNINGS__
+	#ifdef __clang__
+	__IGNORE_WARNING__("-Wused-but-marked-unused")
+	#endif
 	ASSERT_DEATH({ cpu.AdvanceProgramCounter(); }, "");
+	__STOP_IGNORING_WARNINGS__
 #endif
 }
 TEST_F(CpuTests, RetreatProgramCounter)
@@ -121,7 +154,12 @@ TEST_F(CpuTests, RetreatProgramCounter)
 
 #ifndef NDEBUG
 	cpu._programCounter = 1;
+	__START_IGNORING_WARNINGS__
+	#ifdef __clang__
+	__IGNORE_WARNING__("-Wused-but-marked-unused")
+	#endif
 	ASSERT_DEATH({ cpu.RetreatProgramCounter(); }, "");
+	__STOP_IGNORING_WARNINGS__
 #endif
 }
 
@@ -129,7 +167,12 @@ TEST_F(CpuTests, ReturnFromSubRoutine)
 {
 	Cpu cpu;
 #ifndef NDEBUG
+	__START_IGNORING_WARNINGS__
+	#ifdef __clang__
+	__IGNORE_WARNING__("-Wused-but-marked-unused")
+	#endif
 	ASSERT_DEATH({ cpu.ReturnFromSubRoutine(); }, "");
+	__STOP_IGNORING_WARNINGS__
 #endif
 
 	cpu._stackPointer = 4;
@@ -322,10 +365,10 @@ TEST_F(CpuTests, LoadRegistersFromRam)
 {
 	TestRam ram;
 	for (size_t i = 0; i < 128; ++i)
-		ram.data.push_back(i);
+		ram.data.push_back(static_cast<emu::Byte>(i));
 
 	Cpu cpu;
-	cpu._indexRegister = ram.data.size() / 3;
+	cpu._indexRegister = static_cast<emu::TwoBytes>(ram.data.size() / 3);
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu.LoadRegistersFromRam(instruction, ram);
 
@@ -392,7 +435,7 @@ TEST_F(CpuTests, StoreRegistersInRam)
 	cpu._indexRegister = 7;
 
 	for (size_t i = 0; i < cpu._registers.size(); ++i)
-		cpu._registers[i] = i * i;
+		cpu._registers[i] = static_cast<emu::Byte>(i * i);
 
 	emu::TwoBytes instruction = 0xDCAE;
 
@@ -612,8 +655,86 @@ TEST_F(CpuTests, RandomAndEqualByte)
 
 TEST_F(CpuTests, Draw)
 {
+	TestRam ram;
+
 	Cpu cpu;
-	ASSERT_FALSE(true);
+	cpu._indexRegister = 7;
+
+	TestDisplay display(8, 8);
+
+	ram.data.resize(32);
+
+	// draw a single 4-byte sprites...
+	constexpr size_t spriteBytes = 0x4;
+	ram.data[cpu._indexRegister + 0] = 0xA4;	// 0b10100100
+	ram.data[cpu._indexRegister + 1] = 0x03;	// 0b00000011
+	ram.data[cpu._indexRegister + 2] = 0x7A;	// 0b01111010
+	ram.data[cpu._indexRegister + 3] = 0xA4;	// 0b00000001
+
+	// ... starting at (row,col) = (2,3)
+	constexpr auto row = 2;
+	constexpr auto col = 3;
+
+	constexpr emu::Byte Vx = 0x9;
+	constexpr emu::Byte Vy = 0xA;
+	constexpr emu::TwoBytes instruction = (Vx << 8u) | (Vy << 4u) | spriteBytes;
+	static_assert(utils::LowerFourBitsHighByte(instruction) == Vx);
+	static_assert(utils::UpperFourBitsLowByte(instruction) == Vy);
+	static_assert(utils::LowestFourBits(instruction) == spriteBytes);
+	cpu._registers[Vx] = row;
+	cpu._registers[Vy] = col;
+
+	// Vx=0x9
+	// Vy=0xA
+	// regVx=2
+	// regVy=3
+	// n = 4
+	// this will iterate on the first n=4 rows and set
+	// the display at (x,y) [which is at coordinate (regVx + nBit) + (regVy + row) * width],
+	// where nBit=0,...7. If the screen is already on, it detects a collision and stores it in the last register.
+	// we skip 0 bits (ie transparent pixels)
+	// the way 1 bit on pixels are drawn is by mean of xor-ing, which is flipping the display state (flag^1==!flag)
+	//	spdlog::set_level(spdlog::level::trace);
+	cpu.Draw(instruction, display, ram);
+
+	// no collisions, as the display was off
+	ASSERT_EQ(cpu._registers.back(), 0);
+
+	const auto getCoord = [&](const auto x, const auto y)
+	{ return (static_cast<size_t>(cpu._registers[Vy] + x)) * display.GetWidth() + (cpu._registers[Vx] + y); };
+	const auto reverseBits = [](auto& b)
+	{
+		auto reversed = std::decay_t<decltype(b)> {};
+		for (size_t i = 0; i < b.size(); ++i)
+			reversed[i] = b[b.size() - 1 - i];
+		return reversed;
+	};
+	for (size_t i = 0; i < spriteBytes; ++i)
+	{
+		std::bitset<8> displayRow;
+		for (size_t j = 0; j < displayRow.size(); ++j)
+			displayRow[j] = display.GetAt(getCoord(0, j));
+
+		ASSERT_EQ(reverseBits(displayRow).to_ulong(), ram.data[cpu._indexRegister + 0]);
+	}
+
+	// "redraw" the same sprite will flip the display off
+	cpu.Draw(instruction, display, ram);
+	for (size_t i = 0; i < display.GetPixels().size(); ++i)
+		ASSERT_FALSE(display.GetPixels()[i]);
+	ASSERT_EQ(cpu._registers.back(), 1);
+
+	// finally, try to redraw the same sprite, this should show the original image
+	cpu.Draw(instruction, display, ram);
+	ASSERT_EQ(cpu._registers.back(), 0);
+	for (size_t i = 0; i < spriteBytes; ++i)
+	{
+		std::bitset<8> displayRow;
+		for (size_t j = 0; j < displayRow.size(); ++j)
+			displayRow[j] = display.GetAt(getCoord(0, j));
+
+		ASSERT_EQ(reverseBits(displayRow).to_ulong(), ram.data[cpu._indexRegister + 0]);
+	}
 }
 
 TEST_F(CpuTests, WaitUntilKeyIsPressed)
@@ -626,11 +747,11 @@ TEST_F(CpuTests, WaitUntilKeyIsPressed)
 
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu.WaitUntilKeyIsPressed(instruction, testKeyPad);
-	ASSERT_EQ(cpu._programCounter, 40);  // still waiting
+	ASSERT_EQ(cpu._programCounter, 40);	   // still waiting
 
 	testKeyPad.toggle[emu::Keys::Seven] = true;
 	cpu.WaitUntilKeyIsPressed(instruction, testKeyPad);
-	ASSERT_EQ(cpu._programCounter, 40);  // success
+	ASSERT_EQ(cpu._programCounter, 40);	   // success
 	cpu._registers[0x9] = emu::Keys::Seven;
 
 	// take first one
@@ -638,13 +759,13 @@ TEST_F(CpuTests, WaitUntilKeyIsPressed)
 	testKeyPad.toggle[emu::Keys::Seven] = true;
 	testKeyPad.toggle[emu::Keys::Eight] = true;
 	cpu.WaitUntilKeyIsPressed(instruction, testKeyPad);
-	ASSERT_EQ(cpu._programCounter, 40);  // success
+	ASSERT_EQ(cpu._programCounter, 40);	   // success
 	cpu._registers[0x9] = std::min(emu::Keys::Seven, emu::Keys::Eight);
 
 	// all pressed (same as before
 	testKeyPad.toggle.set();
 	cpu.WaitUntilKeyIsPressed(instruction, testKeyPad);
-	ASSERT_EQ(cpu._programCounter, 40);  // success
+	ASSERT_EQ(cpu._programCounter, 40);	   // success
 	cpu._registers[0x9] = emu::Keys::START;
 }
 

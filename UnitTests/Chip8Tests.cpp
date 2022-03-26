@@ -2,13 +2,13 @@
 #include <gtest/gtest.h>
 #include "Emulator/Chip8.h"
 
-#include "spdlog/spdlog.h"
+#include "Emulator/Logging.h"
 
 class Chip8Tests: public ::testing::Test
 {
 };
 
-TEST_F(Chip8Tests, TestRom1)
+TEST_F(Chip8Tests, DISABLED_TestRom1)
 {
 	spdlog::set_level(spdlog::level::trace);
 	auto* dataPath = std::getenv("DATA_PATH");

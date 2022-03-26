@@ -26,7 +26,7 @@ namespace emu
 		 */
 
 	public:
-		[[nodiscard]] auto GetProgramCounter() { return _programCounter; };
+		[[nodiscard]] auto GetProgramCounter() { return _programCounter; }
 		void SetProgramCounter(const TwoBytes value);
 		void AdvanceProgramCounter();
 		void RetreatProgramCounter();
