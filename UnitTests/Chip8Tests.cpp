@@ -86,11 +86,11 @@ struct TestCpu: public emu::Cpu
 struct TestChip8: public emu::detail::Chip8<TestCpu, TestRng, TestRam, TestDisplay, TestKeyPad>
 {
 	using Base = emu::detail::Chip8<TestCpu, TestRng, TestRam, TestDisplay, TestKeyPad>;
-	using Base::cpu;
-	using Base::rng;
-	using Base::ram;
-	using Base::display;
-	using Base::keypad;
+	using Base::_cpu;
+	using Base::_rng;
+	using Base::_ram;
+	using Base::_display;
+	using Base::_keypad;
 };
 
 class Chip8Tests: public ::testing::Test
@@ -98,9 +98,9 @@ class Chip8Tests: public ::testing::Test
 public:
 	bool ExecuteInstruction(TestChip8& chip8, const emu::TwoBytes instruction)
 	{
-		chip8.cpu._programCounter = 0;
-		chip8.ram.data[chip8.cpu._programCounter] = static_cast<emu::Byte>((instruction & 0xFF00u) >> 8);
-		chip8.ram.data[chip8.cpu._programCounter + 1] = instruction & 0x00FFu;
+		chip8._cpu._programCounter = 0;
+		chip8._ram.data[chip8._cpu._programCounter] = static_cast<emu::Byte>((instruction & 0xFF00u) >> 8);
+		chip8._ram.data[chip8._cpu._programCounter + 1] = instruction & 0x00FFu;
 
 		return chip8.Cycle();
 	}
@@ -109,23 +109,23 @@ public:
 TEST_F(Chip8Tests, Initialization)
 {
 	TestChip8 chip8;
-	ASSERT_EQ(chip8.cpu.GetProgramCounter(), emu::Ram::instructionStart);
-	ASSERT_TRUE(std::all_of(chip8.display.GetPixels().begin(), chip8.display.GetPixels().end(), [](auto pixel) { return !pixel; }));
+	ASSERT_EQ(chip8._cpu.GetProgramCounter(), emu::Ram::instructionStart);
+	ASSERT_TRUE(std::all_of(chip8._display.GetPixels().begin(), chip8._display.GetPixels().end(), [](auto pixel) { return !pixel; }));
 }
 
 TEST_F(Chip8Tests, ExecuteUniquePatternInstructionSets)
 {
 	TestChip8 chip8;
-	chip8.cpu._programCounter = 0;
-	chip8.ram.data.resize(10);
-	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
-	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
+	chip8._cpu._programCounter = 0;
+	chip8._ram.data.resize(10);
+	chip8._ram.data[chip8._cpu._programCounter] = 0xA9;
+	chip8._ram.data[chip8._cpu._programCounter + 1] = 0xF2;
 
 	ASSERT_TRUE(ExecuteInstruction(chip8, 0x1a24));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x1nnn);
-	ASSERT_EQ(chip8.cpu.GetProgramCounter(), 0xa24);
+	ASSERT_EQ(chip8._cpu.GetProgramCounter(), 0xa24);
 
-	chip8.cpu._stackPointer = 0;
+	chip8._cpu._stackPointer = 0;
 	ASSERT_TRUE(ExecuteInstruction(chip8, 0x2a24));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x2nnn);
 
@@ -156,8 +156,8 @@ TEST_F(Chip8Tests, ExecuteUniquePatternInstructionSets)
 	ASSERT_TRUE(ExecuteInstruction(chip8, 0xca24));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xCxkk);
 
-	chip8.cpu._indexRegister = 0;
-	chip8.ram.data.resize(16);
+	chip8._cpu._indexRegister = 0;
+	chip8._ram.data.resize(16);
 	ASSERT_TRUE(ExecuteInstruction(chip8, 0xda24));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xDxyn);
 }
@@ -165,15 +165,15 @@ TEST_F(Chip8Tests, ExecuteUniquePatternInstructionSets)
 TEST_F(Chip8Tests, ExecuteInstruction0x00E)
 {
 	TestChip8 chip8;
-	chip8.cpu._programCounter = 0;
-	chip8.ram.data.resize(10);
-	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
-	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
+	chip8._cpu._programCounter = 0;
+	chip8._ram.data.resize(10);
+	chip8._ram.data[chip8._cpu._programCounter] = 0xA9;
+	chip8._ram.data[chip8._cpu._programCounter + 1] = 0xF2;
 
 	ASSERT_TRUE(ExecuteInstruction(chip8, 0x00E0));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x00E0);
 
-	chip8.cpu._stackPointer = 1;
+	chip8._cpu._stackPointer = 1;
 	ASSERT_TRUE(ExecuteInstruction(chip8, 0x00EE));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x00EE);
 }
@@ -181,10 +181,10 @@ TEST_F(Chip8Tests, ExecuteInstruction0x00E)
 TEST_F(Chip8Tests, ExecuteInstruction0x80xy)
 {
 	TestChip8 chip8;
-	chip8.cpu._programCounter = 0;
-	chip8.ram.data.resize(10);
-	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
-	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
+	chip8._cpu._programCounter = 0;
+	chip8._ram.data.resize(10);
+	chip8._ram.data[chip8._cpu._programCounter] = 0xA9;
+	chip8._ram.data[chip8._cpu._programCounter + 1] = 0xF2;
 
 	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81a0));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xy0);
@@ -217,10 +217,10 @@ TEST_F(Chip8Tests, ExecuteInstruction0x80xy)
 TEST_F(Chip8Tests, ExecuteInstruction0xExyz)
 {
 	TestChip8 chip8;
-	chip8.cpu._programCounter = 0;
-	chip8.ram.data.resize(10);
-	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
-	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
+	chip8._cpu._programCounter = 0;
+	chip8._ram.data.resize(10);
+	chip8._ram.data[chip8._cpu._programCounter] = 0xA9;
+	chip8._ram.data[chip8._cpu._programCounter + 1] = 0xF2;
 
 	ASSERT_TRUE(ExecuteInstruction(chip8, 0xEAA1));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xExA1);
@@ -232,11 +232,11 @@ TEST_F(Chip8Tests, ExecuteInstruction0xExyz)
 TEST_F(Chip8Tests, ExecuteInstruction0xFxyz)
 {
 	TestChip8 chip8;
-	chip8.cpu._programCounter = 0;
-	chip8.ram.data.resize(16);
-	chip8.ram.fonts.resize(10);
-	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
-	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
+	chip8._cpu._programCounter = 0;
+	chip8._ram.data.resize(16);
+	chip8._ram.fonts.resize(10);
+	chip8._ram.data[chip8._cpu._programCounter] = 0xA9;
+	chip8._ram.data[chip8._cpu._programCounter + 1] = 0xF2;
 
 	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD07));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx07);

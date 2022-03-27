@@ -223,18 +223,20 @@ static void HelpMarker(const char* desc)
 
 __START_IGNORING_WARNINGS__
 __IGNORE_WARNING__("-Wnon-virtual-dtor")
+__IGNORE_WARNING__("-Wold-style-cast")
 class ChipEightEmulator: public mahi::gui::Application
 {
 public:
 	explicit ChipEightEmulator(const mahi::gui::Application::Config& config, std::shared_ptr<utils::RingBufferSinkSt> sink)
 		: Application(config), _sink(sink)
 	{
+		assert(_emulator.LoadRom("/home/raiden/programming/chip8/UnitTests/Data/test_opcode.ch8"));
 	}
 	virtual ~ChipEightEmulator() = default;
 
 private:
 	// Override update (called once per frame)
-	void update() override { logExample(); }
+	void update() override { emulatorExample(); }
 
 	void logExample()
 	{
@@ -624,13 +626,66 @@ private:
 		ImGui::End();
 	}
 
+	void emulatorExample()
+	{
+//		ImGui::Begin("My shapes");
+//
+//		ImDrawList* draw_list = ImGui::GetWindowDrawList();
+//
+//		// Get the current ImGui cursor position
+//		ImVec2 p = ImGui::GetCursorScreenPos();
+//
+//		// Draw a red circle
+//		__START_IGNORING_WARNINGS__
+//		__IGNORE_WARNING__("-Wold-style-cast")
+//		draw_list->AddCircleFilled(ImVec2(p.x + 50, p.y + 50), 30.0f, IM_COL32(255, 0, 0, 255), 16);
+//
+//		// Draw a 3 pixel thick yellow line
+//		draw_list->AddLine(ImVec2(p.x, p.y), ImVec2(p.x + 100.0f, p.y + 100.0f), IM_COL32(255, 255, 0, 255), 3.0f);
+//		__STOP_IGNORING_WARNINGS__
+//
+//		// Advance the ImGui cursor to claim space in the window (otherwise the window will appear small and needs to be resized)
+//		ImGui::Dummy(ImVec2(200, 200));
+//
+//		ImGui::End();
+
+		ImGui::SetNextWindowSize(ImVec2(200, 300), ImGuiCond_Appearing);
+
+		ImGui::Begin("MAHI Log", &open);
+		ImDrawList* draw_list = ImGui::GetWindowDrawList();
+		const auto p = ImGui::GetCursorScreenPos();
+
+		for (size_t row = 0; row < _emulator.GetDisplay().GetWidth(); ++row)
+		{
+			auto pixelStart = p;
+			pixelStart.x = p.x + static_cast<float>(row) * pixelSize;
+
+			for (size_t col = 0; col < _emulator.GetDisplay().GetHeight(); ++col)
+			{
+				pixelStart.y = p.y + static_cast<float>(col) * pixelSize;
+				ImVec2 pixelEnd = { pixelStart.x + pixelSize, pixelStart.y + pixelSize };
+				const size_t coord = col + row * _emulator.GetDisplay().GetWidth();
+				if (_emulator.GetDisplay().GetAt(coord))
+					draw_list->AddRectFilled(pixelStart, pixelEnd, pixelColor);
+			}
+		}
+
+		ImGui::End();
+
+		if (!open)
+			quit();
+	}
+
+
 private:
 	std::shared_ptr<utils::RingBufferSinkSt> _sink{};
 	bool open = true;
 	emu::Chip8 _emulator{};
 	ImGuiTextFilter filter{};
+
+	ImU32 pixelColor { IM_COL32(255, 0, 0, 255) };
+	float pixelSize = 4.0;
 };
-__STOP_IGNORING_WARNINGS__
 
 int main(int /*argc*/, char** /*argv*/)
 {

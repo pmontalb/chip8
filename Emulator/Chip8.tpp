@@ -15,8 +15,8 @@ namespace emu::detail
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
 	Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::Chip8()
 	{
-		cpu.SetProgramCounter(Ram::instructionStart);
-		LOG_TRACE("Chip8 created and pc={}", cpu.GetProgramCounter());
+		_cpu.SetProgramCounter(Ram::instructionStart);
+		LOG_TRACE("Chip8 created and pc={}", _cpu.GetProgramCounter());
 		PopulateInstructionSetFunctionPointers();
 	}
 
@@ -25,83 +25,83 @@ namespace emu::detail
 	{
 		_uniquePatternInstructions[0x0] = { detail::_uniquePatternInstructions[0x0], invalidInstruction };
 		_uniquePatternInstructions[0x1] = { detail::_uniquePatternInstructions[0x1], [this](const TwoBytes instruction)
-											{ this->cpu.JumpToAddress(instruction); } };
+											{ this->_cpu.JumpToAddress(instruction); } };
 		_uniquePatternInstructions[0x2] = { detail::_uniquePatternInstructions[0x2], [this](const TwoBytes instruction)
-											{ this->cpu.CallSubRoutine(instruction); } };
+											{ this->_cpu.CallSubRoutine(instruction); } };
 		_uniquePatternInstructions[0x3] = { detail::_uniquePatternInstructions[0x3], [this](const TwoBytes instruction)
-											{ this->cpu.ConditionalSkipIfByteEqual(instruction); } };
+											{ this->_cpu.ConditionalSkipIfByteEqual(instruction); } };
 		_uniquePatternInstructions[0x4] = { detail::_uniquePatternInstructions[0x4], [this](const TwoBytes instruction)
-											{ this->cpu.ConditionalSkipIfByteNotEqual(instruction); } };
+											{ this->_cpu.ConditionalSkipIfByteNotEqual(instruction); } };
 		_uniquePatternInstructions[0x5] = { detail::_uniquePatternInstructions[0x5], [this](const TwoBytes instruction)
-											{ this->cpu.ConditionalSkipIfRegistersEqual(instruction); } };
+											{ this->_cpu.ConditionalSkipIfRegistersEqual(instruction); } };
 		_uniquePatternInstructions[0x6] = { detail::_uniquePatternInstructions[0x6],
-											[this](const TwoBytes instruction) { this->cpu.LoadByte(instruction); } };
+											[this](const TwoBytes instruction) { this->_cpu.LoadByte(instruction); } };
 		_uniquePatternInstructions[0x7] = { detail::_uniquePatternInstructions[0x7], [this](const TwoBytes instruction)
-											{ this->cpu.AddEqualByte(instruction); } };
+											{ this->_cpu.AddEqualByte(instruction); } };
 		_uniquePatternInstructions[0x8] = { detail::_uniquePatternInstructions[0x8], invalidInstruction };
 		_uniquePatternInstructions[0x9] = { detail::_uniquePatternInstructions[0x9], [this](const TwoBytes instruction)
-											{ this->cpu.ConditionalSkipIfRegistersNotEqual(instruction); } };
+											{ this->_cpu.ConditionalSkipIfRegistersNotEqual(instruction); } };
 		_uniquePatternInstructions[0xA] = { detail::_uniquePatternInstructions[0xA], [this](const TwoBytes instruction)
-											{ this->cpu.SetIndexRegister(instruction); } };
+											{ this->_cpu.SetIndexRegister(instruction); } };
 		_uniquePatternInstructions[0xB] = { detail::_uniquePatternInstructions[0xB], [this](const TwoBytes instruction)
-											{ this->cpu.JumpToLastTwelveBitsPlusFirstRegister(instruction); } };
+											{ this->_cpu.JumpToLastTwelveBitsPlusFirstRegister(instruction); } };
 		_uniquePatternInstructions[0xC] = { detail::_uniquePatternInstructions[0xC], [this](const TwoBytes instruction)
-											{ this->cpu.RandomAndEqualByte(instruction, this->rng); } };
+											{ this->_cpu.RandomAndEqualByte(instruction, this->_rng); } };
 		_uniquePatternInstructions[0xD] = { detail::_uniquePatternInstructions[0xD], [this](const TwoBytes instruction)
-											{ this->cpu.Draw(instruction, this->display, this->ram); } };
+											{ this->_cpu.Draw(instruction, this->_display, this->_ram); } };
 
 		_0x80xyInstructions[0x0] = { detail::_0x80xyInstructions[0x0],
-									 [this](const TwoBytes instruction) { this->cpu.LoadRegister(instruction); } };
+									 [this](const TwoBytes instruction) { this->_cpu.LoadRegister(instruction); } };
 		_0x80xyInstructions[0x1] = { detail::_0x80xyInstructions[0x1],
-									 [this](const TwoBytes instruction) { this->cpu.OrEqualRegister(instruction); } };
+									 [this](const TwoBytes instruction) { this->_cpu.OrEqualRegister(instruction); } };
 		_0x80xyInstructions[0x2] = { detail::_0x80xyInstructions[0x2],
-									 [this](const TwoBytes instruction) { this->cpu.AndEqualRegister(instruction); } };
+									 [this](const TwoBytes instruction) { this->_cpu.AndEqualRegister(instruction); } };
 		_0x80xyInstructions[0x3] = { detail::_0x80xyInstructions[0x3],
-									 [this](const TwoBytes instruction) { this->cpu.XorEqualRegister(instruction); } };
+									 [this](const TwoBytes instruction) { this->_cpu.XorEqualRegister(instruction); } };
 		_0x80xyInstructions[0x4] = { detail::_0x80xyInstructions[0x4], [this](const TwoBytes instruction)
-									 { this->cpu.AddRegistersAndStoreLastByte(instruction); } };
+									 { this->_cpu.AddRegistersAndStoreLastByte(instruction); } };
 		_0x80xyInstructions[0x5] = { detail::_0x80xyInstructions[0x5], [this](const TwoBytes instruction)
-									 { this->cpu.SubtractEqualRegisters(instruction); } };
+									 { this->_cpu.SubtractEqualRegisters(instruction); } };
 		_0x80xyInstructions[0x6] = { detail::_0x80xyInstructions[0x6], [this](const TwoBytes instruction)
-									 { this->cpu.ShiftRightAndStoreLastBit(instruction); } };
+									 { this->_cpu.ShiftRightAndStoreLastBit(instruction); } };
 		_0x80xyInstructions[0x7] = { detail::_0x80xyInstructions[0x7], [this](const TwoBytes instruction)
-									 { this->cpu.OppositeSubtractRegisters(instruction); } };
+									 { this->_cpu.OppositeSubtractRegisters(instruction); } };
 		for (size_t i = 0x8; i <= 0xD; ++i)
 			_0x80xyInstructions[i] = { detail::_0x80xyInstructions[i], invalidInstruction };
 		_0x80xyInstructions[0xE] = { detail::_0x80xyInstructions[0xE], [this](const TwoBytes instruction)
-									 { this->cpu.ShiftLeftAndStoreFirstBit(instruction); } };
+									 { this->_cpu.ShiftLeftAndStoreFirstBit(instruction); } };
 
 		_0x00EkInstructions.fill({ Instruction::INVALID, invalidInstruction });
 		_0x00EkInstructions[0x0] = { detail::_0x00EkInstructions[0x0],
-									 [this](const TwoBytes) { this->display.Clear(); } };
+									 [this](const TwoBytes) { this->_display.Clear(); } };
 		_0x00EkInstructions[0xE] = { detail::_0x00EkInstructions[0xE],
-									 [this](const TwoBytes) { this->cpu.ReturnFromSubRoutine(); } };
+									 [this](const TwoBytes) { this->_cpu.ReturnFromSubRoutine(); } };
 
 		_0xExyzInstructions.fill({ Instruction::INVALID, invalidInstruction });
 		_0xExyzInstructions[0x1] = { detail::_0xExyzInstructions[0x1],
-									 [this](const TwoBytes instruction) { this->cpu.ConditionalSkipIfKeyPressed(instruction, this->keypad); } };
+									 [this](const TwoBytes instruction) { this->_cpu.ConditionalSkipIfKeyPressed(instruction, this->_keypad); } };
 		_0xExyzInstructions[0xE] = { detail::_0xExyzInstructions[0xE],
-									 [this](const TwoBytes instruction) { this->cpu.ConditionalSkipIfKeyNotPressed(instruction, this->keypad); } };
+									 [this](const TwoBytes instruction) { this->_cpu.ConditionalSkipIfKeyNotPressed(instruction, this->_keypad); } };
 
 		_0xFxyzInstructions.fill({ Instruction::INVALID, invalidInstruction });
 		_0xFxyzInstructions[0x07] = { detail::_0xFxyzInstructions[0x07],
-									  [this](const TwoBytes instruction) { this->cpu.LoadDelayTimer(instruction); } };
+									  [this](const TwoBytes instruction) { this->_cpu.LoadDelayTimer(instruction); } };
 		_0xFxyzInstructions[0x0A] = { detail::_0xFxyzInstructions[0x0A], [this](const TwoBytes instruction)
-									  { this->cpu.WaitUntilKeyIsPressed(instruction, this->keypad); } };
+									  { this->_cpu.WaitUntilKeyIsPressed(instruction, this->_keypad); } };
 		_0xFxyzInstructions[0x15] = { detail::_0xFxyzInstructions[0x15],
-									  [this](const TwoBytes instruction) { this->cpu.SetDelayTimer(instruction); } };
+									  [this](const TwoBytes instruction) { this->_cpu.SetDelayTimer(instruction); } };
 		_0xFxyzInstructions[0x18] = { detail::_0xFxyzInstructions[0x18],
-									  [this](const TwoBytes instruction) { this->cpu.SetSoundTimer(instruction); } };
+									  [this](const TwoBytes instruction) { this->_cpu.SetSoundTimer(instruction); } };
 		_0xFxyzInstructions[0x1E] = { detail::_0xFxyzInstructions[0x1E], [this](const TwoBytes instruction)
-									  { this->cpu.IndexRegisterAddEqualRegister(instruction); } };
+									  { this->_cpu.IndexRegisterAddEqualRegister(instruction); } };
 		_0xFxyzInstructions[0x29] = { detail::_0xFxyzInstructions[0x29], [this](const TwoBytes instruction)
-									  { this->cpu.LoadFontIntoIndexRegister(instruction, this->ram); } };
+									  { this->_cpu.LoadFontIntoIndexRegister(instruction, this->_ram); } };
 		_0xFxyzInstructions[0x33] = { detail::_0xFxyzInstructions[0x33], [this](const TwoBytes instruction)
-									  { this->cpu.StoreBinaryCodeRepresentation(instruction, this->ram); } };
+									  { this->_cpu.StoreBinaryCodeRepresentation(instruction, this->_ram); } };
 		_0xFxyzInstructions[0x55] = { detail::_0xFxyzInstructions[0x55], [this](const TwoBytes instruction)
-									  { this->cpu.StoreRegistersInRam(instruction, this->ram); } };
+									  { this->_cpu.StoreRegistersInRam(instruction, this->_ram); } };
 		_0xFxyzInstructions[0x65] = { detail::_0xFxyzInstructions[0x65], [this](const TwoBytes instruction)
-									  { this->cpu.LoadRegistersFromRam(instruction, this->ram); } };
+									  { this->_cpu.LoadRegistersFromRam(instruction, this->_ram); } };
 	}
 
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
@@ -123,13 +123,13 @@ namespace emu::detail
 		std::string buffer;
 		buffer.resize(static_cast<std::size_t>(file.tellg()));
 		LOG_TRACE("buffer size({})", buffer.size());
-		assert(buffer.size() < ram.GetSize() - Ram::instructionStart);
+		assert(buffer.size() < _ram.GetSize() - Ram::instructionStart);
 
 		// Go back to the beginning of the file and fill the buffer
 		file.seekg(0, std::ios::beg);
 		file.read(buffer.data(), static_cast<long>(buffer.size()));
 
-		ram.Load(buffer);
+		_ram.Load(buffer);
 
 		return true;
 	}
@@ -141,13 +141,13 @@ namespace emu::detail
 		LOG_TRACE("fetched instruction({0:d}|{0:X})", instruction);
 
 		// pc += 2
-		cpu.AdvanceProgramCounter();
+		_cpu.AdvanceProgramCounter();
 
 		// now execute the instruction
 		if (!ExecuteInstruction(instruction))
 			return false;
 
-		cpu.DecrementTimers();
+		_cpu.DecrementTimers();
 
 		return true;
 	}
@@ -155,9 +155,9 @@ namespace emu::detail
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
 	TwoBytes Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::FetchInstruction()
 	{
-		const auto pc = cpu.GetProgramCounter();
-		const auto memByte = ram.GetAt(pc);
-		const auto nextMemByte = ram.GetAt(pc + 1);
+		const auto pc = _cpu.GetProgramCounter();
+		const auto memByte = _ram.GetAt(pc);
+		const auto nextMemByte = _ram.GetAt(pc + 1);
 
 		// the upper bits come from memByte the lowest bit from nextMemByte
 		static constexpr TwoBytes byteShift = 8;

@@ -26,6 +26,8 @@ namespace emu
 			bool Cycle();
 			Instruction GetLastExecutedInstruction() const { return _lastExecutedInstruction; }
 
+			const auto& GetDisplay() const { return _display; }
+
 		protected:
 			TwoBytes FetchInstruction();
 			bool ExecuteInstruction(const TwoBytes instruction);
@@ -34,11 +36,11 @@ namespace emu
 			void PopulateInstructionSetFunctionPointers();
 
 		protected:
-			CpuT cpu {};
-			RngT rng {};
-			RamT ram {};
-			DisplayT display {};
-			KeypadT keypad {};
+			CpuT _cpu {};
+			RngT _rng {};
+			RamT _ram {};
+			DisplayT _display {};
+			KeypadT _keypad {};
 
 		private:
 			Instruction _lastExecutedInstruction = Instruction::INVALID;
