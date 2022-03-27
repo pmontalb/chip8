@@ -226,14 +226,13 @@ namespace emu::detail
 			case 0x0:
 			{
 				const auto lowestFourBits = utils::LowestFourBits(instruction);
-				LOG_DEBUG("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lowestFourBits({2:d}|{2:X})",
+				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lowestFourBits({2:d}|{2:X}) 0x00E{2:X}",
 						  instruction, mostSignificantBit, lowestFourBits);
 				_0x00EkInstructions[lowestFourBits].second(instruction);
 				_lastExecutedInstruction = _0x00EkInstructions[lowestFourBits].first;
 				break;
 			}
 
-			// 0x1nnn
 			case 0x1:
 			case 0x2:
 			case 0x3:
@@ -246,7 +245,7 @@ namespace emu::detail
 			case 0xB:
 			case 0xC:
 			case 0xD:
-				LOG_DEBUG("instruction({0:d}|{0:X}) msb({1:d}|{1:X})", instruction, mostSignificantBit);
+				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) 0x{1:X}xyz", instruction, mostSignificantBit);
 				_uniquePatternInstructions[mostSignificantBit].second(instruction);
 				_lastExecutedInstruction = _uniquePatternInstructions[mostSignificantBit].first;
 				break;
@@ -254,8 +253,8 @@ namespace emu::detail
 			// 0x8*** instructions
 			case 0x8:
 			{
-				const Byte lastFourBits = utils::LowestFourBits(instruction);
-				LOG_DEBUG("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X})",
+				const auto lastFourBits = utils::LowestFourBits(instruction);
+				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0x8xy{2:X}",
 						  instruction, mostSignificantBit, lastFourBits);
 				_0x80xyInstructions[lastFourBits].second(instruction);
 				_lastExecutedInstruction = _0x80xyInstructions[lastFourBits].first;
@@ -265,9 +264,11 @@ namespace emu::detail
 			// 0xE*** instructions
 			case 0xE:
 			{
-				const auto lowestByte = utils::LowestByte(instruction);
-				_0xExyzInstructions[lowestByte].second(instruction);
-				_lastExecutedInstruction = _0xExyzInstructions[lowestByte].first;
+				const auto lastFourBits = utils::LowestFourBits(instruction);
+				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0xExy{2:X}",
+						  instruction, mostSignificantBit, lastFourBits);
+				_0xExyzInstructions[lastFourBits].second(instruction);
+				_lastExecutedInstruction = _0xExyzInstructions[lastFourBits].first;
 				break;
 			}
 
@@ -275,6 +276,8 @@ namespace emu::detail
 			case 0xF:
 			{
 				const auto lowestByte = utils::LowestByte(instruction);
+				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0xFx{2:X}",
+						  instruction, mostSignificantBit, lowestByte);
 				_0xFxyzInstructions[lowestByte].second(instruction);
 				_lastExecutedInstruction = _0xFxyzInstructions[lowestByte].first;
 				break;

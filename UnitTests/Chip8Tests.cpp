@@ -91,13 +91,19 @@ struct TestChip8: public emu::detail::Chip8<TestCpu, TestRng, TestRam, TestDispl
 	using Base::ram;
 	using Base::display;
 	using Base::keypad;
-
-	using Base::FetchInstruction;
-	using Base::ExecuteInstruction;
 };
 
 class Chip8Tests: public ::testing::Test
 {
+public:
+	bool ExecuteInstruction(TestChip8& chip8, const emu::TwoBytes instruction)
+	{
+		chip8.cpu._programCounter = 0;
+		chip8.ram.data[chip8.cpu._programCounter] = static_cast<emu::Byte>((instruction & 0xFF00u) >> 8);
+		chip8.ram.data[chip8.cpu._programCounter + 1] = instruction & 0x00FFu;
+
+		return chip8.Cycle();
+	}
 };
 
 TEST_F(Chip8Tests, Initialization)
@@ -107,14 +113,53 @@ TEST_F(Chip8Tests, Initialization)
 	ASSERT_TRUE(std::all_of(chip8.display.GetPixels().begin(), chip8.display.GetPixels().end(), [](auto pixel) { return !pixel; }));
 }
 
-TEST_F(Chip8Tests, FetchInstruction)
+TEST_F(Chip8Tests, ExecuteUniquePatternInstructionSets)
 {
 	TestChip8 chip8;
 	chip8.cpu._programCounter = 0;
 	chip8.ram.data.resize(10);
 	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
 	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
-	ASSERT_EQ(chip8.FetchInstruction(), 0xA9F2);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x1a24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x1nnn);
+	ASSERT_EQ(chip8.cpu.GetProgramCounter(), 0xa24);
+
+	chip8.cpu._stackPointer = 0;
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x2a24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x2nnn);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x3a24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x3xkk);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x4a24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x4xkk);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x5a24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x5xy0);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x6a24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x6xkk);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x7a24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x7xkk);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x9a24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x9xy0);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xaa24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xAnnn);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xba24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xBnnn);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xca24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xCxkk);
+
+	chip8.cpu._indexRegister = 0;
+	chip8.ram.data.resize(16);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xda24));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xDxyn);
 }
 
 TEST_F(Chip8Tests, ExecuteInstruction0x00E)
@@ -125,15 +170,15 @@ TEST_F(Chip8Tests, ExecuteInstruction0x00E)
 	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
 	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x00E0));
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x00E0));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x00E0);
 
 	chip8.cpu._stackPointer = 1;
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x00EE));
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x00EE));
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x00EE);
 }
 
-TEST_F(Chip8Tests, ExecuteInstructionUniqueSets)
+TEST_F(Chip8Tests, ExecuteInstruction0x80xy)
 {
 	TestChip8 chip8;
 	chip8.cpu._programCounter = 0;
@@ -141,85 +186,95 @@ TEST_F(Chip8Tests, ExecuteInstructionUniqueSets)
 	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
 	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x1a24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x1nnn);
-	ASSERT_EQ(chip8.cpu.GetProgramCounter(), 0xa24);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81a0));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xy0);
 
-	chip8.cpu._stackPointer = 0;
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x2a24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x2nnn);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81a1));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xy1);
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x3a24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x3xkk);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81a2));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xy2);
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x4a24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x4xkk);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81a3));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xy3);
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x5a24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x5xy0);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81a4));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xy4);
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x6a24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x6xkk);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81a5));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xy5);
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x7a24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x7xkk);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81a6));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xy6);
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0x9a24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x9xy0);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81a7));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xy7);
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0xaa24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xAnnn);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0x81aE));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0x8xyE);
+}
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0xba24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xBnnn);
+TEST_F(Chip8Tests, ExecuteInstruction0xExyz)
+{
+	TestChip8 chip8;
+	chip8.cpu._programCounter = 0;
+	chip8.ram.data.resize(10);
+	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
+	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
 
-	ASSERT_TRUE(chip8.ExecuteInstruction(0xca24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xCxkk);
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xEAA1));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xExA1);
 
-	chip8.cpu._indexRegister = 0;
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xE09E));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xEx9E);
+}
+
+TEST_F(Chip8Tests, ExecuteInstruction0xFxyz)
+{
+	TestChip8 chip8;
+	chip8.cpu._programCounter = 0;
 	chip8.ram.data.resize(16);
-	ASSERT_TRUE(chip8.ExecuteInstruction(0xda24));
-	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xDxyn);
+	chip8.ram.fonts.resize(10);
+	chip8.ram.data[chip8.cpu._programCounter] = 0xA9;
+	chip8.ram.data[chip8.cpu._programCounter + 1] = 0xF2;
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD07));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx07);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD0A));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx0A);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD15));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx15);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD18));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx18);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD1E));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx1E);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD29));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx29);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD33));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx33);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD55));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx55);
+
+	ASSERT_TRUE(ExecuteInstruction(chip8, 0xFD65));
+	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx65);
 }
 
-TEST_F(Chip8Tests, DISABLED_TestRom1)
+TEST_F(Chip8Tests, TestOpCode)
 {
-	spdlog::set_level(spdlog::level::trace);
+	spdlog::set_level(spdlog::level::info);
+	emu::Chip8 chip8;
+
 	auto* dataPath = std::getenv("DATA_PATH");
 	ASSERT_NE(dataPath, nullptr);
+	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/test_opcode.ch8"));
 
-	emu::Chip8 chip8;
-	if (!chip8.LoadRom(std::string(dataPath) + "/test_rom_1.ch8"))
-		return;
-
-	size_t i = 0;
-	while(true)
-	{
-		chip8.Cycle();
-		++i;
-		if (i > 5000)
-			break;
-	}
-
-}
-
-TEST_F(Chip8Tests, DISABLED_TestPong)
-{
-	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
-	spdlog::set_level(spdlog::level::trace);
-	auto* dataPath = std::getenv("DATA_PATH");
-	ASSERT_NE(dataPath, nullptr);
-
-	emu::Chip8 chip8;
-	if (!chip8.LoadRom(std::string(dataPath) + "/PONG"))
-		return;
-
-	size_t i = 0;
-	while (true)
-	{
-		chip8.Cycle();
-		++i;
-		if (i > 5000)
-			break;
-	}
+	for (size_t i = 0; i < 5000; ++i)
+		ASSERT_TRUE(chip8.Cycle());
 }

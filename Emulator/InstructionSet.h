@@ -12,7 +12,7 @@ namespace emu
 	{
 		_0x00E0,
 		_0x00EE,
-		
+
 		_0x1nnn,
 		_0x2nnn,
 		_0x3xkk,
@@ -20,7 +20,7 @@ namespace emu
 		_0x5xy0,
 		_0x6xkk,
 		_0x7xkk,
-		
+
 		_0x8xy0,
 		_0x8xy1,
 		_0x8xy2,
@@ -30,16 +30,16 @@ namespace emu
 		_0x8xy6,
 		_0x8xy7,
 		_0x8xyE,
-		
+
 		_0x9xy0,
 		_0xAnnn,
 		_0xBnnn,
 		_0xCxkk,
 		_0xDxyn,
-		
+
 		_0xExA1,
 		_0xEx9E,
-		
+
 		_0xFx07,
 		_0xFx0A,
 		_0xFx15,
@@ -49,10 +49,10 @@ namespace emu
 		_0xFx33,
 		_0xFx55,
 		_0xFx65,
-		
+
 		INVALID,
 	};
-	
+
 	// clang-format off
 	static constexpr std::size_t nInstructions = 34;
 	static constexpr std::array<std::string_view, nInstructions> instructionSetIds = {{
@@ -101,7 +101,7 @@ namespace emu
 	{
 		return instructionSetIds[static_cast<size_t>(instruction)];
 	}
-	
+
 	namespace detail
 	{
 		static constexpr std::array<Instruction, 14> _uniquePatternInstructions = { {
@@ -167,12 +167,12 @@ namespace emu
 			Instruction::INVALID,
 			Instruction::INVALID,
 			Instruction::INVALID,
+			Instruction::INVALID,
+			Instruction::INVALID,
+			Instruction::INVALID,
+			Instruction::INVALID,
+			Instruction::INVALID,
 			Instruction::_0xEx9E,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
 		} };
 
 

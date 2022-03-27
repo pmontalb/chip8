@@ -79,4 +79,7 @@ create_test(
 	DEPENDENCIES
 		testMain Cpu Display Ram Rng Keypad
 )
-
+set_tests_properties(chip8Tests.test PROPERTIES ENVIRONMENT "DATA_PATH=${CMAKE_BINARY_DIR}")
+add_custom_command(TARGET chip8Tests POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/UnitTests/Data/test_opcode.ch8 ${CMAKE_BINARY_DIR}/test_opcode.ch8
+)
