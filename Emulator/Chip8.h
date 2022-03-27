@@ -24,6 +24,7 @@ namespace emu
 			bool LoadRom(const std::filesystem::path& path);
 
 			bool Cycle();
+			void Rewind();
 			Instruction GetLastExecutedInstruction() const { return _lastExecutedInstruction; }
 
 			const auto& GetDisplay() const { return _display; }

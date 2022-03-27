@@ -364,7 +364,7 @@ namespace emu
 						return;
 					}
 
-					const auto coord = (yCoord + row) * display.GetWidth() + (xCoord + col);
+					const auto coord = ((yCoord + row) * display.GetWidth() + (xCoord + col)) % (display.GetWidth() * display.GetHeight());
 					assert(coord < display.GetWidth() * display.GetHeight());
 
 					const auto screenIsOn = display.GetAt(coord);

@@ -228,9 +228,14 @@ class ChipEightEmulator: public mahi::gui::Application
 {
 public:
 	explicit ChipEightEmulator(const mahi::gui::Application::Config& config, std::shared_ptr<utils::RingBufferSinkSt> sink)
-		: Application(config), _sink(sink)
+		: Application(config), _sink(std::move(sink))
 	{
-		assert(_emulator.LoadRom("/home/raiden/programming/chip8/UnitTests/Data/test_opcode.ch8"));
+		spdlog::set_level(logLevel);
+
+//		_emulator.LoadRom("/home/raiden/programming/chip8/UnitTests/Data/test_opcode.ch8");
+//		_emulator.LoadRom("/home/raiden/programming/chip8/Roms/Maze.ch8");
+		_emulator.LoadRom("/home/raiden/programming/chip8/Roms/PONG");
+//		const_cast<emu::Display&>(_emulator.GetDisplay()).Clear();
 	}
 	virtual ~ChipEightEmulator() = default;
 
@@ -626,47 +631,103 @@ private:
 		ImGui::End();
 	}
 
+	void setUpDebuggingWindow()
+	{
+		ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+		ImGui::Begin("Debug", &open);
+		if (ImGui::BeginCombo("Debug Level", to_string_view(logLevel).data()))
+		{
+			for (auto level: { spdlog::level::off, spdlog::level::critical, spdlog::level::err, spdlog::level::warn, spdlog::level::info, spdlog::level::debug, spdlog::level::trace })
+			{
+				if (ImGui::Selectable(to_string_view(level).data(), level == logLevel))
+				{
+					logLevel = level;
+					spdlog::set_level(logLevel);
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+		ImGui::Separator();
+
+		if (ImGui::Button("Clear"))
+			_sink->GetRingBuffer().Clear();
+		ImGui::SameLine();
+		filter.Draw("Filter", -50);
+		ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+		for (size_t i = 0; i < _sink->GetRingBuffer().Size(); ++i)
+		{
+			const auto& rbIter = _sink->GetRingBuffer()[i];
+			if (filter.PassFilter(rbIter.second.c_str()))
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, logColors.at(rbIter.first));
+				ImGui::TextUnformatted(rbIter.second.c_str());
+				ImGui::PopStyleColor();
+			}
+		}
+		if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+			ImGui::SetScrollHereY(1.0f);
+		ImGui::EndChild();
+		ImGui::End();
+	}
+
+
 	void emulatorExample()
 	{
-//		ImGui::Begin("My shapes");
-//
-//		ImDrawList* draw_list = ImGui::GetWindowDrawList();
-//
-//		// Get the current ImGui cursor position
-//		ImVec2 p = ImGui::GetCursorScreenPos();
-//
-//		// Draw a red circle
-//		__START_IGNORING_WARNINGS__
-//		__IGNORE_WARNING__("-Wold-style-cast")
-//		draw_list->AddCircleFilled(ImVec2(p.x + 50, p.y + 50), 30.0f, IM_COL32(255, 0, 0, 255), 16);
-//
-//		// Draw a 3 pixel thick yellow line
-//		draw_list->AddLine(ImVec2(p.x, p.y), ImVec2(p.x + 100.0f, p.y + 100.0f), IM_COL32(255, 255, 0, 255), 3.0f);
-//		__STOP_IGNORING_WARNINGS__
-//
-//		// Advance the ImGui cursor to claim space in the window (otherwise the window will appear small and needs to be resized)
-//		ImGui::Dummy(ImVec2(200, 200));
-//
-//		ImGui::End();
+		setUpDebuggingWindow();
 
-		ImGui::SetNextWindowSize(ImVec2(200, 300), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_Appearing);
+		ImGui::Begin("Chip8 Emulator", &open);
 
-		ImGui::Begin("MAHI Log", &open);
-		ImDrawList* draw_list = ImGui::GetWindowDrawList();
-		const auto p = ImGui::GetCursorScreenPos();
+//		if (ImGui::GetIO().DeltaTime)
+		ImGui::Text("%.2f FPS", static_cast<double>(ImGui::GetIO().Framerate));
 
-		for (size_t row = 0; row < _emulator.GetDisplay().GetWidth(); ++row)
+		if (ImGui::Button("Play"))
+			_running = true;
+		if (ImGui::Button("Stop"))
+			_running = false;
+
+		const bool stepping = ImGui::Button("Step");
+		const bool rewinding = ImGui::Button("Rewind");
+		if (stepping || rewinding)
+			_running = false;
+		if (rewinding)
 		{
-			auto pixelStart = p;
-			pixelStart.x = p.x + static_cast<float>(row) * pixelSize;
-
-			for (size_t col = 0; col < _emulator.GetDisplay().GetHeight(); ++col)
+			_emulator.Rewind();
+		}
+		else if (_running || stepping)
+		{
+			bool success = _emulator.Cycle();
+			if (stopOnError && !success)
 			{
-				pixelStart.y = p.y + static_cast<float>(col) * pixelSize;
-				ImVec2 pixelEnd = { pixelStart.x + pixelSize, pixelStart.y + pixelSize };
-				const size_t coord = col + row * _emulator.GetDisplay().GetWidth();
-				if (_emulator.GetDisplay().GetAt(coord))
-					draw_list->AddRectFilled(pixelStart, pixelEnd, pixelColor);
+				_running = false;
+			}
+		}
+
+		auto* drawList = ImGui::GetWindowDrawList();
+		auto p = ImGui::GetCursorScreenPos();
+		drawList->AddRect(p,
+						  { p.x + 2.0f * xPadding + static_cast<float>(_emulator.GetDisplay().GetWidth()) * pixelSize,
+							p.y + 2.0f * yPadding + static_cast<float>(_emulator.GetDisplay().GetHeight()) * pixelSize },
+						  frameColor);
+		p.x += xPadding;
+		p.y += yPadding;
+
+		if (_emulator.GetDisplay().HasChanged())
+		{
+			for (size_t row = 0; row < _emulator.GetDisplay().GetWidth(); ++row)
+			{
+				auto pixelStart = p;
+				pixelStart.x = p.x + static_cast<float>(row) * pixelSize;
+
+				for (size_t col = 0; col < _emulator.GetDisplay().GetHeight(); ++col)
+				{
+					pixelStart.y = p.y + static_cast<float>(col) * pixelSize;
+					ImVec2 pixelEnd = { pixelStart.x + pixelSize, pixelStart.y + pixelSize };
+					const size_t coord = row + col * _emulator.GetDisplay().GetWidth();
+					if (_emulator.GetDisplay().GetAt(coord))
+						drawList->AddRectFilled(pixelStart, pixelEnd, pixelColor);
+				}
 			}
 		}
 
@@ -684,11 +745,21 @@ private:
 	ImGuiTextFilter filter{};
 
 	ImU32 pixelColor { IM_COL32(255, 0, 0, 255) };
-	float pixelSize = 4.0;
+	ImU32 frameColor { IM_COL32(255, 255, 255, 255) };
+	float pixelSize = 4.0f;
+	float xPadding = 50.0f;
+	float yPadding = 50.0f;
+	spdlog::level::level_enum logLevel = spdlog::level::warn;
+	bool stopOnError = true;
+
+	bool _running = false;
 };
 
 int main(int /*argc*/, char** /*argv*/)
 {
+	auto sink = RegisterRingBufferSink();
+	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
 	mahi::gui::Application::Config config;
 	config.fullscreen = false;
 	config.msaa = 0;
@@ -696,7 +767,7 @@ int main(int /*argc*/, char** /*argv*/)
 	config.monitor = 1;
 	config.title = "Chip8 Emulator";
 	config.background = mahi::gui::Colors::Auto;
-	ChipEightEmulator app(config, RegisterRingBufferSink());
+	ChipEightEmulator app(config, sink);
 	app.run();
 	return 0;
 }

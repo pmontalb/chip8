@@ -694,7 +694,6 @@ TEST_F(CpuTests, Draw)
 	// where nBit=0,...7. If the screen is already on, it detects a collision and stores it in the last register.
 	// we skip 0 bits (ie transparent pixels)
 	// the way 1 bit on pixels are drawn is by mean of xor-ing, which is flipping the display state (flag^1==!flag)
-	//	spdlog::set_level(spdlog::level::trace);
 	cpu.Draw(instruction, display, ram);
 
 	// no collisions, as the display was off

@@ -20,20 +20,12 @@ namespace emu
 		[[nodiscard]] std::size_t GetHeight() const override { return height; }
 		void Clear() override;
 
-		[[nodiscard]] bool GetAt(const std::size_t coord) const override
-		{
-			return _data[coord];
-		}
+		[[nodiscard]] bool GetAt(const std::size_t coord) const override;
 
-		void FlipAt(const std::size_t coord) override
-		{
-			// this is an XOR with 1
-			_data[coord] = !_data[coord];
-			_hasChanged = true;
-		}
+		void FlipAt(const std::size_t coord) override;
 
-		void Reset() override { _hasChanged = false; }
-		[[nodiscard]] virtual bool HasChanged() const override { return _hasChanged; }
+		void Reset() override;
+		[[nodiscard]] bool HasChanged() const override;
 
 	private:
 		std::bitset<size> _data = std::bitset<size>(0);
