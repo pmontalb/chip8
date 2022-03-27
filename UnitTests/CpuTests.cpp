@@ -76,7 +76,7 @@ private:
 	const size_t _height;
 };
 
-struct Cpu: public emu::Cpu
+struct TestCpu: public emu::Cpu
 {
 	using emu::Cpu::_indexRegister;
 	using emu::Cpu::_programCounter;
@@ -95,17 +95,17 @@ class CpuTests: public ::testing::Test
 
 TEST_F(CpuTests, StackSizeIs16)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	ASSERT_EQ(cpu._stack.size(), 16);
 }
 TEST_F(CpuTests, RegisterSizeIs16)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	ASSERT_EQ(cpu._stack.size(), 16);
 }
 TEST_F(CpuTests, InitializationValues)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	ASSERT_EQ(cpu._programCounter, 0);
 	ASSERT_EQ(cpu._indexRegister, 0);
 	ASSERT_EQ(cpu._stackPointer, 0);
@@ -117,19 +117,19 @@ TEST_F(CpuTests, InitializationValues)
 
 TEST_F(CpuTests, GetProgramCounter)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._programCounter = 42;
 	ASSERT_EQ(cpu.GetProgramCounter(), 42);
 }
 TEST_F(CpuTests, SetProgramCounter)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu.SetProgramCounter(512);
 	ASSERT_EQ(cpu.GetProgramCounter(), 512);
 }
 TEST_F(CpuTests, AdvanceProgramCounter)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu.SetProgramCounter(512);
 	cpu.AdvanceProgramCounter();
 	ASSERT_EQ(cpu.GetProgramCounter(), 514);
@@ -147,7 +147,7 @@ TEST_F(CpuTests, AdvanceProgramCounter)
 }
 TEST_F(CpuTests, RetreatProgramCounter)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu.SetProgramCounter(512);
 	cpu.RetreatProgramCounter();
 	ASSERT_EQ(cpu.GetProgramCounter(), 510);
@@ -165,7 +165,7 @@ TEST_F(CpuTests, RetreatProgramCounter)
 
 TEST_F(CpuTests, ReturnFromSubRoutine)
 {
-	Cpu cpu;
+	TestCpu cpu;
 #ifndef NDEBUG
 	__START_IGNORING_WARNINGS__
 	#ifdef __clang__
@@ -184,7 +184,7 @@ TEST_F(CpuTests, ReturnFromSubRoutine)
 
 TEST_F(CpuTests, JumpToAddress)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xFD4E;
 	cpu.JumpToAddress(instruction);
 	ASSERT_EQ(cpu.GetProgramCounter(), 0xD4E);
@@ -192,7 +192,7 @@ TEST_F(CpuTests, JumpToAddress)
 
 TEST_F(CpuTests, CallSubRoutine)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._stackPointer = 7;
 	cpu._stack[cpu._stackPointer] = 42;
 	cpu._programCounter = 24;
@@ -207,7 +207,7 @@ TEST_F(CpuTests, CallSubRoutine)
 
 TEST_F(CpuTests, ConditionalSkipIfByteEqual)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._programCounter = 42;
 
 	cpu._registers[0xC] = 0xBF;
@@ -223,7 +223,7 @@ TEST_F(CpuTests, ConditionalSkipIfByteEqual)
 }
 TEST_F(CpuTests, ConditionalSkipIfByteNotEqual)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._programCounter = 42;
 
 	cpu._registers[0xC] = 0xBF;
@@ -239,7 +239,7 @@ TEST_F(CpuTests, ConditionalSkipIfByteNotEqual)
 }
 TEST_F(CpuTests, ConditionalSkipIfRegistersEqual)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._programCounter = 42;
 
 	cpu._registers[0xC] = 0xBF;
@@ -260,7 +260,7 @@ TEST_F(CpuTests, ConditionalSkipIfRegistersEqual)
 }
 TEST_F(CpuTests, ConditionalSkipIfRegistersNotEqual)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._programCounter = 42;
 
 	cpu._registers[0xC] = 0xBF;
@@ -281,7 +281,7 @@ TEST_F(CpuTests, ConditionalSkipIfRegistersNotEqual)
 }
 TEST_F(CpuTests, ConditionalSkipIfKeyPressed)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._programCounter = 42;
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu._registers[0x9] = emu::Keys::Seven;
@@ -302,7 +302,7 @@ TEST_F(CpuTests, ConditionalSkipIfKeyPressed)
 }
 TEST_F(CpuTests, ConditionalSkipIfKeyNotPressed)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._programCounter = 42;
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu._registers[0x9] = emu::Keys::Seven;
@@ -324,7 +324,7 @@ TEST_F(CpuTests, ConditionalSkipIfKeyNotPressed)
 
 TEST_F(CpuTests, LoadByte)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu.LoadByte(instruction);
 
@@ -332,7 +332,7 @@ TEST_F(CpuTests, LoadByte)
 }
 TEST_F(CpuTests, LoadRegister)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._registers[0xA] = 0x77;
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu.LoadRegister(instruction);
@@ -341,7 +341,7 @@ TEST_F(CpuTests, LoadRegister)
 }
 TEST_F(CpuTests, LoadDelayTimer)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._delayTimer = 42;
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu.LoadDelayTimer(instruction);
@@ -354,7 +354,7 @@ TEST_F(CpuTests, LoadFontIntoIndexRegister)
 	ram.fonts.resize(0xFF, 0x7C);
 
 	ram.fonts[0xFA] = 0x42;
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._registers[0x9] = 0xFA;
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu.LoadFontIntoIndexRegister(instruction, ram);
@@ -367,7 +367,7 @@ TEST_F(CpuTests, LoadRegistersFromRam)
 	for (size_t i = 0; i < 128; ++i)
 		ram.data.push_back(static_cast<emu::Byte>(i));
 
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._indexRegister = static_cast<emu::TwoBytes>(ram.data.size() / 3);
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu.LoadRegistersFromRam(instruction, ram);
@@ -382,7 +382,7 @@ TEST_F(CpuTests, LoadRegistersFromRam)
 
 TEST_F(CpuTests, SetDelayTimer)
 {
-	Cpu cpu;
+	TestCpu cpu;
 
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu._registers[0x9] = 0x42;
@@ -392,7 +392,7 @@ TEST_F(CpuTests, SetDelayTimer)
 }
 TEST_F(CpuTests, SetSoundTimer)
 {
-	Cpu cpu;
+	TestCpu cpu;
 
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu._registers[0x9] = 0x42;
@@ -406,7 +406,7 @@ TEST_F(CpuTests, StoreBinaryCodeRepresentation)
 	TestRam ram;
 	ram.data.resize(0xFFFF);
 
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._indexRegister = 7;
 
 	emu::TwoBytes instruction = 0xD9AE;
@@ -431,7 +431,7 @@ TEST_F(CpuTests, StoreRegistersInRam)
 	for (size_t i = 0; i < ram.data.size(); ++i)
 		ram.data[i] = 42;
 
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._indexRegister = 7;
 
 	for (size_t i = 0; i < cpu._registers.size(); ++i)
@@ -449,7 +449,7 @@ TEST_F(CpuTests, StoreRegistersInRam)
 
 TEST_F(CpuTests, AddEqualByte)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 42;
@@ -458,7 +458,7 @@ TEST_F(CpuTests, AddEqualByte)
 }
 TEST_F(CpuTests, IndexRegisterAddEqualRegister)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 42;
@@ -468,7 +468,7 @@ TEST_F(CpuTests, IndexRegisterAddEqualRegister)
 }
 TEST_F(CpuTests, OrEqualRegister)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 0x0A;
@@ -483,7 +483,7 @@ TEST_F(CpuTests, OrEqualRegister)
 }
 TEST_F(CpuTests, AndEqualRegister)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 0xAA;
@@ -493,7 +493,7 @@ TEST_F(CpuTests, AndEqualRegister)
 }
 TEST_F(CpuTests, XorEqualRegister)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 0x0A;
@@ -508,7 +508,7 @@ TEST_F(CpuTests, XorEqualRegister)
 }
 TEST_F(CpuTests, AddRegistersAndStoreLastByte)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 0x1;
@@ -528,7 +528,7 @@ TEST_F(CpuTests, AddRegistersAndStoreLastByte)
 
 TEST_F(CpuTests, SubtractEqualRegisters)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 0xA0;
@@ -549,7 +549,7 @@ TEST_F(CpuTests, SubtractEqualRegisters)
 }
 TEST_F(CpuTests, OppositeSubtractRegisters)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 0xA0;
@@ -570,7 +570,7 @@ TEST_F(CpuTests, OppositeSubtractRegisters)
 
 TEST_F(CpuTests, ShiftRightAndStoreLastBit)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 0xA1;
@@ -605,7 +605,7 @@ TEST_F(CpuTests, ShiftRightAndStoreLastBit)
 }
 TEST_F(CpuTests, ShiftLeftAndStoreFirstBit)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 
 	cpu._registers[0x9] = 0x0A;
@@ -626,7 +626,7 @@ TEST_F(CpuTests, ShiftLeftAndStoreFirstBit)
 
 TEST_F(CpuTests, SetIndexRegister)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu._indexRegister = 7;
 	cpu.SetIndexRegister(instruction);
@@ -635,7 +635,7 @@ TEST_F(CpuTests, SetIndexRegister)
 
 TEST_F(CpuTests, JumpToLastTwelveBitsPlusFirstRegister)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu._registers[0] = 0x70;
 	cpu.JumpToLastTwelveBitsPlusFirstRegister(instruction);
@@ -646,7 +646,7 @@ TEST_F(CpuTests, RandomAndEqualByte)
 {
 	TestRng rng;
 	rng.totallyRandomNumber = 0xA0;
-	Cpu cpu;
+	TestCpu cpu;
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu.RandomAndEqualByte(instruction, rng);
 
@@ -657,7 +657,7 @@ TEST_F(CpuTests, Draw)
 {
 	TestRam ram;
 
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._indexRegister = 7;
 
 	TestDisplay display(8, 8);
@@ -739,7 +739,7 @@ TEST_F(CpuTests, Draw)
 
 TEST_F(CpuTests, WaitUntilKeyIsPressed)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._programCounter = 42;
 
 	TestKeyPad testKeyPad;
@@ -771,7 +771,7 @@ TEST_F(CpuTests, WaitUntilKeyIsPressed)
 
 TEST_F(CpuTests, DecrementTimers)
 {
-	Cpu cpu;
+	TestCpu cpu;
 	cpu._soundTimer = 42;
 	cpu._delayTimer = 24;
 	cpu.DecrementTimers();

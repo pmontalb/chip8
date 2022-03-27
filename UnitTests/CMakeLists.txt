@@ -77,6 +77,6 @@ create_test(
 	SOURCES
 		Chip8Tests.cpp
 	DEPENDENCIES
-		testMain Chip8
+		testMain Cpu Display Ram Rng Keypad
 )
 

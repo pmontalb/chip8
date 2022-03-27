@@ -7,29 +7,53 @@
 #include "Ram.h"
 #include "Rng.h"
 
+#include "InstructionSet.h"
+
 #include <filesystem>
 
 // https://austinmorlan.com/posts/chip8_emulator/
 namespace emu
 {
-	class Chip8
+	namespace detail
 	{
-	public:
-		Chip8();
-		bool LoadRom(const std::filesystem::path& path);
+		template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
+		class Chip8
+		{
+		public:
+			Chip8();
+			bool LoadRom(const std::filesystem::path& path);
 
-		bool Cycle();
+			bool Cycle();
+			Instruction GetLastExecutedInstruction() const { return _lastExecutedInstruction; }
 
+		protected:
+			TwoBytes FetchInstruction();
+			bool ExecuteInstruction(const TwoBytes instruction);
 
-	private:
-		TwoBytes FetchInstruction();
-		bool ExecuteInstruction(const TwoBytes instruction);
+		private:
+			void PopulateInstructionSetFunctionPointers();
 
-	private:
-		Cpu cpu {};
-		Rng rng {};
-		Ram ram {};
-		Display display {};
-		Keypad keypad {};
-	};
+		protected:
+			CpuT cpu {};
+			RngT rng {};
+			RamT ram {};
+			DisplayT display {};
+			KeypadT keypad {};
+
+		private:
+			Instruction _lastExecutedInstruction = Instruction::INVALID;
+			using InstructionSetWorker = std::function<void(const TwoBytes)>;
+			using InstructionPair = std::pair<Instruction, InstructionSetWorker>;
+
+			std::array<InstructionPair, detail::_uniquePatternInstructions.size()> _uniquePatternInstructions{};
+			std::array<InstructionPair, detail::_0x80xyInstructions.size()> _0x80xyInstructions{};
+			std::array<InstructionPair, detail::_0x00EkInstructions.size()> _0x00EkInstructions{};
+			std::array<InstructionPair, detail::_0xExyzInstructions.size()> _0xExyzInstructions{};
+			std::array<InstructionPair, detail::_0xFxyzInstructions.size()> _0xFxyzInstructions{};
+		};
+	}	 // namespace detail
+
+	using Chip8 = detail::Chip8<Cpu, Rng, Ram, Display, Keypad>;
 }	 // namespace emu
+
+#include "Chip8.tpp"

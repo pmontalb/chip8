@@ -20,5 +20,5 @@ create_executable(
 	SOURCES
 		main.cpp
 	DEPENDENCIES
-		mahi::gui Chip8
+		mahi::gui Cpu Display Ram Rng Keypad
 )

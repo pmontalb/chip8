@@ -41,11 +41,3 @@ create_library(
 		spdlog fmt::fmt
 )
 
-create_library(
-	NAME
-		Chip8
-	SOURCES
-		Chip8.cpp
-	DEPENDENCIES
-		Cpu Ram Display Keypad Rng
-)
