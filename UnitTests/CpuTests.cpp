@@ -25,6 +25,7 @@ struct TestRam final: public emu::IRam
 	std::vector<emu::Byte> fonts {};
 
 	[[nodiscard]] std::size_t GetSize() const override { return data.size(); }
+	[[nodiscard]] std::size_t GetInstructionStartAddress() const override { return 0; }
 
 	void Load(const std::string& /*buffer*/) override {}
 

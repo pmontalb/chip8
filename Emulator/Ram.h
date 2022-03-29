@@ -51,15 +51,16 @@ namespace emu
 	class Ram final: public IRam
 	{
 		static constexpr std::size_t size = 4096;
-
-	public:
 		static constexpr std::size_t instructionStart = 0x200;
+	public:
+
 
 		Ram();
 
 		void Load(const std::string& buffer) override;
 
 		[[nodiscard]] size_t GetSize() const override { return size; }
+		[[nodiscard]] std::size_t GetInstructionStartAddress() const override { return instructionStart; }
 
 		[[nodiscard]] Byte GetAt(const size_t index) const override
 		{

@@ -41,8 +41,10 @@ namespace emu
 		 * The top of the stack has the address of one instruction past the one that called the subroutine,
 		 * so we can put that back into the PC. Note that this overwrites our preemptive pc += 2 earlier.
 		 * */
-		LOG_DEBUG("sp({0} -> {1}) stack({2:d}|{2:X}) pc({3})", _stackPointer, _stackPointer - 1, _stack[_stackPointer - 1], _programCounter);
-		SetProgramCounter(_stack[--_stackPointer]);
+		LOG_DEBUG("sp({0} -> {1}) stack({2:d}|{2:X}) pc({3})", _stackPointer, _stackPointer - 1,
+				  _stack[_stackPointer - 1], _programCounter);
+		--_stackPointer;
+		SetProgramCounter(_stack[_stackPointer]);
 	}
 
 	void Cpu::JumpToAddress(const TwoBytes instruction)
@@ -57,17 +59,17 @@ namespace emu
 	{
 		/*
 		 * When we call a subroutine, we want to return eventually, so we put the current PC onto the top of the stack.
-		 * Remember that we did pc += 2 in Cycle(), so the current PC holds the next instruction after this CALL, which is correct.
-		 * We don’t want to return to the CALL instruction because it would be an infinite loop of CALLs and RETs.
+		 * Remember that we did pc += 2 in Cycle(), so the current PC holds the next instruction after this CALL, which
+		 * is correct. We don’t want to return to the CALL instruction because it would be an infinite loop of CALLs and
+		 * RETs.
 		 * */
 
 		// current pc on top of the stack, and advancing the stack
-		LOG_DEBUG("sp({0:d}|{0:X}->{1:d}|{1:X}) pc({2:d}|{2:X}) stack({3:d}|{3:X} -> {4:d}|{4:X})",
-					 _stackPointer, _stackPointer + 1,
-					 _programCounter,
-					 _stack[_stackPointer + 1],
-					 _programCounter);
-		_stack[_stackPointer++] = static_cast<Byte>(_programCounter);
+		LOG_DEBUG("sp({0:d}|{0:X}->{1:d}|{1:X}) pc({2:d}|{2:X}) stack({3:d}|{3:X} -> {4:d}|{4:X})", _stackPointer,
+				  _stackPointer + 1, _programCounter, _stack[_stackPointer + 1], _programCounter);
+
+		_stack[_stackPointer] = _programCounter;
+		++_stackPointer;
 
 		SetProgramCounter(utils::LowerTwelveBits(instruction));
 	}
@@ -90,14 +92,16 @@ namespace emu
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto Vy = utils::UpperFourBitsLowByte(instruction);
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) Vy({2:d}|{2:X}) regVy({3:d}|{3:X})", Vx, _registers[Vx], Vy, _registers[Vy]);
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) Vy({2:d}|{2:X}) regVy({3:d}|{3:X})", Vx, _registers[Vx], Vy,
+				  _registers[Vy]);
 		ConditionalSkip(_registers[Vx] == _registers[Vy]);
 	}
 	void Cpu::ConditionalSkipIfRegistersNotEqual(const TwoBytes instruction)
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto Vy = utils::UpperFourBitsLowByte(instruction);
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) Vy({2:d}|{2:X}) regVy({3:d}|{3:X})", Vx, _registers[Vx], Vy, _registers[Vy]);
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) Vy({2:d}|{2:X}) regVy({3:d}|{3:X})", Vx, _registers[Vx], Vy,
+				  _registers[Vy]);
 		ConditionalSkip(_registers[Vx] != _registers[Vy]);
 	}
 	void Cpu::ConditionalSkipIfKeyPressed(const TwoBytes instruction, const IKeypad& keypad)
@@ -135,7 +139,8 @@ namespace emu
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto Vy = utils::UpperFourBitsLowByte(instruction);
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) <~ Vy({2:d}|{2:X}) regVy({3:d}|{3:X})", Vx, _registers[Vx], Vy, _registers[Vy]);
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) <~ Vy({2:d}|{2:X}) regVy({3:d}|{3:X})", Vx, _registers[Vx], Vy,
+				  _registers[Vy]);
 		_registers[Vx] = _registers[Vy];
 	}
 	void Cpu::LoadDelayTimer(const TwoBytes instruction)
@@ -148,7 +153,8 @@ namespace emu
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto digit = _registers[Vx];
-		LOG_DEBUG("Vx({0:d}|{0:X}) digit({1:d}|{1:X}) indexRegister({2:d}|{2:X}) <~ font({3:d}|{3:X})", Vx, digit, _indexRegister, ram.GetFontAt(digit));
+		LOG_DEBUG("Vx({0:d}|{0:X}) digit({1:d}|{1:X}) indexRegister({2:d}|{2:X}) <~ font({3:d}|{3:X})", Vx, digit,
+				  _indexRegister, ram.GetFontAt(digit));
 		_indexRegister = ram.GetFontAt(digit);
 	}
 	void Cpu::LoadRegistersFromRam(const TwoBytes instruction, IRam& ram)
@@ -187,8 +193,10 @@ namespace emu
 
 		// hundreds
 		ram.SetAt(_indexRegister, value % base);
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) bcd({1:d}|{1:X}) = (h={1:d}|{1:X} | t={1:d}|{1:X} | u={1:d}|{1:X})", Vx, _registers[Vx], value,
-					 ram.GetAt(_indexRegister), ram.GetAt(_indexRegister + 1), ram.GetAt(_indexRegister + 2));
+		LOG_DEBUG(
+			"Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) bcd({1:d}|{1:X}) = (h={1:d}|{1:X} | t={1:d}|{1:X} | u={1:d}|{1:X})", Vx,
+			_registers[Vx], value, ram.GetAt(_indexRegister), ram.GetAt(_indexRegister + 1),
+			ram.GetAt(_indexRegister + 2));
 	}
 	void Cpu::StoreRegistersInRam(const TwoBytes instruction, IRam& ram)
 	{
@@ -201,13 +209,15 @@ namespace emu
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto kk = utils::LowestByte(instruction);
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) += kk({2:d}|{2:X}) = {3:d}|{3:X}", Vx, _registers[Vx], kk, _registers[Vx], kk);
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) += kk({2:d}|{2:X}) = {3:d}|{3:X}", Vx, _registers[Vx], kk,
+				  _registers[Vx], kk);
 		_registers[Vx] += kk;
 	}
 	void Cpu::IndexRegisterAddEqualRegister(const TwoBytes instruction)
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
-		LOG_DEBUG("index({0:d}|{0:X}) += Vx({1:d}|{1:X}) regVx({2:d}|{2:X}) = {3:d}|{3:X}", _indexRegister, Vx, _registers[Vx], _indexRegister + _registers[Vx]);
+		LOG_DEBUG("index({0:d}|{0:X}) += Vx({1:d}|{1:X}) regVx({2:d}|{2:X}) = {3:d}|{3:X}", _indexRegister, Vx,
+				  _registers[Vx], _indexRegister + _registers[Vx]);
 		_indexRegister += _registers[Vx];
 	}
 
@@ -215,21 +225,24 @@ namespace emu
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto Vy = utils::UpperFourBitsLowByte(instruction);
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) |= Vy({2:d}|{2:X}) regVy({3:d}|{3:X}) = {4:d}|{4:X}", Vx, _registers[Vx], Vy, _registers[Vy], _registers[Vx] | _registers[Vy]);
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) |= Vy({2:d}|{2:X}) regVy({3:d}|{3:X}) = {4:d}|{4:X}", Vx,
+				  _registers[Vx], Vy, _registers[Vy], _registers[Vx] | _registers[Vy]);
 		_registers[Vx] |= _registers[Vy];
 	}
 	void Cpu::AndEqualRegister(const TwoBytes instruction)
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto Vy = utils::UpperFourBitsLowByte(instruction);
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) &= Vy({2:d}|{2:X}) regVy({3:d}|{3:X}) = {4:d}|{4:X}", Vx, _registers[Vx], Vy, _registers[Vy], _registers[Vx] & _registers[Vy]);
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) &= Vy({2:d}|{2:X}) regVy({3:d}|{3:X}) = {4:d}|{4:X}", Vx,
+				  _registers[Vx], Vy, _registers[Vy], _registers[Vx] & _registers[Vy]);
 		_registers[Vx] &= _registers[Vy];
 	}
 	void Cpu::XorEqualRegister(const TwoBytes instruction)
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto Vy = utils::UpperFourBitsLowByte(instruction);
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) ^= Vy({2:d}|{2:X}) regVy({3:d}|{3:X}) = {4:d}|{4:X}", Vx, _registers[Vx], Vy, _registers[Vy], _registers[Vx] ^ _registers[Vy]);
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) ^= Vy({2:d}|{2:X}) regVy({3:d}|{3:X}) = {4:d}|{4:X}", Vx,
+				  _registers[Vx], Vy, _registers[Vy], _registers[Vx] ^ _registers[Vy]);
 		_registers[Vx] ^= _registers[Vy];
 	}
 
@@ -244,8 +257,9 @@ namespace emu
 		// lets's store the carry there
 		_registers.back() = sum > std::numeric_limits<Byte>::max();
 
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) + Vy({2:d}|{2:X}) regVy({3:d}|{3:X}) -> sum({3:d}|{3:X}) carry({4:d}|{4:X}) regVx({4:d}|{4:X})",
-					 Vx, _registers[Vx], Vy, _registers[Vy], sum, _registers.back(), utils::LowestByte(sum));
+		LOG_DEBUG(
+			"Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) + Vy({2:d}|{2:X}) regVy({3:d}|{3:X}) -> sum({3:d}|{3:X}) carry({4:d}|{4:X}) regVx({4:d}|{4:X})",
+			Vx, _registers[Vx], Vy, _registers[Vy], sum, _registers.back(), utils::LowestByte(sum));
 
 		// only the lowest 8 bits of the result are kept, and stored in Vx
 		_registers[Vx] = utils::LowestByte(sum);
@@ -254,14 +268,16 @@ namespace emu
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto Vy = utils::UpperFourBitsLowByte(instruction);
-		LOG_TRACE("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) - Vy({2:d}|{2:X}) regVy({3:d}|{3:X})", Vx, _registers[Vx], Vy, _registers[Vy]);
+		LOG_TRACE("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) - Vy({2:d}|{2:X}) regVy({3:d}|{3:X})", Vx, _registers[Vx], Vy,
+				  _registers[Vy]);
 		SubtractRegisters(Vx, Vx, Vy);
 	}
 	void Cpu::OppositeSubtractRegisters(const TwoBytes instruction)
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto Vy = utils::UpperFourBitsLowByte(instruction);
-		LOG_TRACE("Vy({0:d}|{0:X}) regVy({1:d}|{1:X}) - Vx({2:d}|{2:X}) regVx({3:d}|{3:X})", Vy, _registers[Vy], Vx, _registers[Vx]);
+		LOG_TRACE("Vy({0:d}|{0:X}) regVy({1:d}|{1:X}) - Vx({2:d}|{2:X}) regVx({3:d}|{3:X})", Vy, _registers[Vy], Vx,
+				  _registers[Vx]);
 		SubtractRegisters(Vx, Vy, Vx);
 	}
 	void Cpu::SubtractRegisters(const Byte regOut, const Byte reg1, const Byte reg2)
@@ -270,8 +286,10 @@ namespace emu
 		// lets's store the 'NOT borrow' there
 		_registers.back() = _registers[reg1] > _registers[reg2];
 
-		LOG_DEBUG("V1({0:d}|{0:X}) regV1({1:d}|{1:X}) - V2({2:d}|{2:X}) regV2({3:d}|{3:X}) -> notBorrow({4:d}|{4:X}) regOut[{5:d}|{5:X}]({6:d}|{6:X})",
-					 reg1, _registers[reg1], reg2, _registers[reg2], _registers.back(), regOut, _registers[reg1] - _registers[reg2]);
+		LOG_DEBUG(
+			"V1({0:d}|{0:X}) regV1({1:d}|{1:X}) - V2({2:d}|{2:X}) regV2({3:d}|{3:X}) -> notBorrow({4:d}|{4:X}) regOut[{5:d}|{5:X}]({6:d}|{6:X})",
+			reg1, _registers[reg1], reg2, _registers[reg2], _registers.back(), regOut,
+			_registers[reg1] - _registers[reg2]);
 
 		_registers[regOut] = _registers[reg1] - _registers[reg2];
 	}
@@ -281,7 +299,8 @@ namespace emu
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		_registers.back() = utils::LastBit(_registers[Vx]);
 
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) >> 1 = {2:d}|{2:X} lastBit({2:d}|{2:X}) ", Vx, _registers[Vx], _registers[Vx] >> 1, _registers.back());
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) >> 1 = {2:d}|{2:X} lastBit({2:d}|{2:X}) ", Vx, _registers[Vx],
+				  _registers[Vx] >> 1, _registers.back());
 		_registers[Vx] = static_cast<Byte>(_registers[Vx] >> 1);
 	}
 	void Cpu::ShiftLeftAndStoreFirstBit(const TwoBytes instruction)
@@ -289,7 +308,8 @@ namespace emu
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		_registers.back() = utils::FirstBit(_registers[Vx]);
 
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) << 1 = {2:d}|{2:X} lastBit({2:d}|{2:X}) ", Vx, _registers[Vx], _registers[Vx] << 1, _registers.back());
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) << 1 = {2:d}|{2:X} lastBit({2:d}|{2:X}) ", Vx, _registers[Vx],
+				  _registers[Vx] << 1, _registers.back());
 		_registers[Vx] = static_cast<Byte>(_registers[Vx] << 1);
 	}
 
@@ -301,7 +321,8 @@ namespace emu
 
 	void Cpu::JumpToLastTwelveBitsPlusFirstRegister(const TwoBytes instruction)
 	{
-		LOG_TRACE("pc({0:d}|{0:X}) <~ reg0({1:d}|{1:X}) + instr({2:d}|{2:X}) ", _programCounter, _registers.front(), utils::LowerTwelveBits(instruction));
+		LOG_TRACE("pc({0:d}|{0:X}) <~ reg0({1:d}|{1:X}) + instr({2:d}|{2:X}) ", _programCounter, _registers.front(),
+				  utils::LowerTwelveBits(instruction));
 		SetProgramCounter(_registers.front() + utils::LowerTwelveBits(instruction));
 	}
 
@@ -311,7 +332,8 @@ namespace emu
 		const auto kk = utils::LowestByte(instruction);
 		const auto random = rng.Next();
 
-		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) = kk({2:d}|{2:X}) & rand({3:d}|{3:X}) == {4:d}|{4:X}", Vx, _registers[Vx], kk, random, random & kk);
+		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) = kk({2:d}|{2:X}) & rand({3:d}|{3:X}) == {4:d}|{4:X}", Vx,
+				  _registers[Vx], kk, random, random & kk);
 		_registers[Vx] = random & kk;
 	}
 
@@ -333,14 +355,15 @@ namespace emu
 		const auto Vy = utils::UpperFourBitsLowByte(instruction);
 		const auto n = utils::LowestFourBits(instruction);
 		_registers.back() = 0;
-		LOG_TRACE("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) Vy({0:d}|{0:X}) regVy({1:d}|{1:X}) n({1:d}|{1:X}) VF({1:d}|{1:X})",
-					 Vx, _registers[Vx], Vy, _registers[Vy], n, _registers.back());
+		LOG_TRACE(
+			"Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) Vy({0:d}|{0:X}) regVy({1:d}|{1:X}) n({1:d}|{1:X}) VF({1:d}|{1:X})", Vx,
+			_registers[Vx], Vy, _registers[Vy], n, _registers.back());
 
 		// wrap x and y
 		const auto xCoord = static_cast<Byte>(_registers[Vx] % display.GetWidth());
 		const auto yCoord = static_cast<Byte>(_registers[Vy] % display.GetHeight());
-		LOG_TRACE("width({0}) height({1}) xCoord({2:d}|{2:X}) yCoord({3:d}|{3:X})",
-					 display.GetWidth(), display.GetHeight(), xCoord, yCoord);
+		LOG_TRACE("width({0}) height({1}) xCoord({2:d}|{2:X}) yCoord({3:d}|{3:X})", display.GetWidth(),
+				  display.GetHeight(), xCoord, yCoord);
 
 		static constexpr size_t colSize = 8;
 		for (size_t row = 0; row < n; ++row)
@@ -349,7 +372,7 @@ namespace emu
 			LOG_TRACE("index({0:d}|{0:X}) row({1}) sprite({2:d}|{2:X})", _indexRegister, row, sprite);
 
 			// iterate over the single bit of the sprite
-			utils::constexprFor<0, colSize>(
+			utils::ConstexprFor<0, colSize>(
 				[&](const auto col)
 				{
 					const auto spritePixel = utils::GetBitAt<col>(sprite);
@@ -364,12 +387,14 @@ namespace emu
 						return;
 					}
 
-					const auto coord = ((yCoord + row) * display.GetWidth() + (xCoord + col)) % (display.GetWidth() * display.GetHeight());
+					const auto coord = ((yCoord + row) * display.GetWidth() + (xCoord + col)) %
+									   (display.GetWidth() * display.GetHeight());
 					assert(coord < display.GetWidth() * display.GetHeight());
 
 					const auto screenIsOn = display.GetAt(coord);
 					_registers.back() = static_cast<Byte>(_registers.back() | screenIsOn);
-					LOG_TRACE("row({}) col({}) coord({}) screen=ON: {} collision", row, col, coord, screenIsOn ? "" : "no");
+					LOG_TRACE("row({}) col({}) coord({}) screen=ON: {} collision", row, col, coord,
+							  screenIsOn ? "" : "no");
 
 					// Effectively XOR with the sprite pixel
 					LOG_DEBUG("row({}) col({}) coord({}) screen=OFF: turning on", row, col, coord);
@@ -390,7 +415,8 @@ namespace emu
 				continue;
 			}
 
-			LOG_DEBUG("key({}) pressed: Vx({1:d}|{1:X}) regVx({2:d}|{2:X}) <~ {3:d}|{3:X}", static_cast<Keys::Enum>(i), Vx, _registers[Vx], i);
+			LOG_DEBUG("key({}) pressed: Vx({1:d}|{1:X}) regVx({2:d}|{2:X}) <~ {3:d}|{3:X}", static_cast<Keys::Enum>(i),
+					  Vx, _registers[Vx], i);
 			_registers[Vx] = i;
 			return;
 		}

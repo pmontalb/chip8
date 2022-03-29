@@ -179,7 +179,7 @@ namespace emu
 		static constexpr std::array<Instruction, 0x66> Get0xFxyzInstructionSet()
 		{
 			std::array<Instruction, 0x66> ret {};
-			utils::constexprFor<0, 0x66>([&](const auto i) { ret[i] = Instruction::INVALID; });
+			utils::ConstexprFor<0, 0x66>([&](const auto i) { ret[i] = Instruction::INVALID; });
 
 			ret[0x07] = Instruction::_0xFx07;
 			ret[0x0A] = Instruction::_0xFx0A;

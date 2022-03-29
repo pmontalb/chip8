@@ -41,10 +41,10 @@ TEST_F(RamTests, GetFirstCharOfFont)
 TEST_F(RamTests, SetRam)
 {
 	emu::Ram ram;
-	size_t nonZeroIdx = emu::Ram::instructionStart + 127;
+	size_t nonZeroIdx = ram.GetInstructionStartAddress() + 127;
 	emu::Byte ramValue = 42;
 	ram.SetAt(nonZeroIdx, ramValue);
-	for (size_t i = emu::Ram::instructionStart; i < ram.GetSize(); ++i)
+	for (size_t i = ram.GetInstructionStartAddress(); i < ram.GetSize(); ++i)
 	{
 		if (i == nonZeroIdx)
 			ASSERT_EQ(ram.GetAt(i), ramValue);
@@ -59,20 +59,20 @@ TEST_F(RamTests, CopyFrom)
 	std::fill(dynamicMemory.begin(), dynamicMemory.end(), 42);
 
 	emu::Ram ram;
-	for (size_t i = emu::Ram::instructionStart; i < ram.GetSize(); ++i)
+	for (size_t i = ram.GetInstructionStartAddress(); i < ram.GetSize(); ++i)
 		ram.SetAt(i, 24);
 
 	// verify ram values are not changed
-	for (size_t i = emu::Ram::instructionStart; i < ram.GetSize(); ++i)
+	for (size_t i = ram.GetInstructionStartAddress(); i < ram.GetSize(); ++i)
 		ASSERT_EQ(ram.GetAt(i), 24);
 
-	ram.CopyFrom(emu::Ram::instructionStart + 10, dynamicMemory.data(), dynamicMemory.size());
+	ram.CopyFrom(ram.GetInstructionStartAddress() + 10, dynamicMemory.data(), dynamicMemory.size());
 
-	for (size_t i = emu::Ram::instructionStart + 10; i < ram.GetSize(); ++i)
+	for (size_t i = ram.GetInstructionStartAddress() + 10; i < ram.GetSize(); ++i)
 	{
-		if (i - (emu::Ram::instructionStart + 10) < dynamicMemory.size())
+		if (i - (ram.GetInstructionStartAddress() + 10) < dynamicMemory.size())
 		{
-			ASSERT_EQ(ram.GetAt(i), dynamicMemory[i - (emu::Ram::instructionStart + 10)]);
+			ASSERT_EQ(ram.GetAt(i), dynamicMemory[i - (ram.GetInstructionStartAddress() + 10)]);
 			ASSERT_NE(ram.GetAt(i), 24);
 		}
 		else
@@ -84,12 +84,12 @@ TEST_F(RamTests, CopyFrom)
 
 	std::array<emu::Byte, 512> staticMemory {};
 	std::fill(staticMemory.begin(), staticMemory.end(), 42);
-	ram.CopyFrom(emu::Ram::instructionStart + 10, staticMemory.data(), staticMemory.size() / 2);
-	for (size_t i = emu::Ram::instructionStart + 10; i < ram.GetSize(); ++i)
+	ram.CopyFrom(ram.GetInstructionStartAddress() + 10, staticMemory.data(), staticMemory.size() / 2);
+	for (size_t i = ram.GetInstructionStartAddress() + 10; i < ram.GetSize(); ++i)
 	{
-		if (i - (emu::Ram::instructionStart + 10) < dynamicMemory.size())
+		if (i - (ram.GetInstructionStartAddress() + 10) < dynamicMemory.size())
 		{
-			ASSERT_EQ(ram.GetAt(i), dynamicMemory[i - (emu::Ram::instructionStart + 10)]);
+			ASSERT_EQ(ram.GetAt(i), dynamicMemory[i - (ram.GetInstructionStartAddress() + 10)]);
 			ASSERT_NE(ram.GetAt(i), 24);
 		}
 		else
@@ -107,14 +107,14 @@ TEST_F(RamTests, WriteTo)
 	std::fill(dynamicMemory.begin(), dynamicMemory.end(), 42);
 
 	emu::Ram ram;
-	for (size_t i = emu::Ram::instructionStart; i < ram.GetSize(); ++i)
+	for (size_t i = ram.GetInstructionStartAddress(); i < ram.GetSize(); ++i)
 		ram.SetAt(i, 24);
 
 	// verify ram values are not changed
-	for (size_t i = emu::Ram::instructionStart; i < ram.GetSize(); ++i)
+	for (size_t i = ram.GetInstructionStartAddress(); i < ram.GetSize(); ++i)
 		ASSERT_EQ(ram.GetAt(i), 24);
 
-	ram.WriteTo(emu::Ram::instructionStart + 10, dynamicMemory.data(), dynamicMemory.size() / 2);
+	ram.WriteTo(ram.GetInstructionStartAddress() + 10, dynamicMemory.data(), dynamicMemory.size() / 2);
 
 	for (size_t i = 0; i < dynamicMemory.size(); ++i)
 	{
@@ -127,16 +127,16 @@ TEST_F(RamTests, WriteTo)
 		else
 		{
 			// overridden from ram
-			ASSERT_EQ(dynamicMemory[i], ram.GetAt(i + emu::Ram::instructionStart + 10)) << i;
+			ASSERT_EQ(dynamicMemory[i], ram.GetAt(i + ram.GetInstructionStartAddress() + 10)) << i;
 		}
 	}
 	// verify ram values are not changed
-	for (size_t i = emu::Ram::instructionStart; i < ram.GetSize(); ++i)
+	for (size_t i = ram.GetInstructionStartAddress(); i < ram.GetSize(); ++i)
 		ASSERT_EQ(ram.GetAt(i), 24);
 
 	std::array<emu::Byte, 512> staticMemory {};
 	std::fill(staticMemory.begin(), staticMemory.end(), 42);
-	ram.WriteTo(emu::Ram::instructionStart + 10, staticMemory.data(), staticMemory.size() / 2);
+	ram.WriteTo(ram.GetInstructionStartAddress() + 10, staticMemory.data(), staticMemory.size() / 2);
 	for (size_t i = 0; i < staticMemory.size(); ++i)
 	{
 		if (i >= dynamicMemory.size() / 2)
@@ -148,12 +148,12 @@ TEST_F(RamTests, WriteTo)
 		else
 		{
 			// overridden from ram
-			ASSERT_EQ(staticMemory[i], ram.GetAt(i + emu::Ram::instructionStart + 10)) << i;
+			ASSERT_EQ(staticMemory[i], ram.GetAt(i + ram.GetInstructionStartAddress() + 10)) << i;
 		}
 	}
 
 	// verify ram values are not changed
-	for (size_t i = emu::Ram::instructionStart; i < ram.GetSize(); ++i)
+	for (size_t i = ram.GetInstructionStartAddress(); i < ram.GetSize(); ++i)
 		ASSERT_EQ(ram.GetAt(i), 24);
 }
 
@@ -170,9 +170,9 @@ TEST_F(RamTests, Load)
 	buffer[4] = 0x6F;
 	ram.Load(buffer);
 
-	for (size_t i = emu::Ram::instructionStart; i - emu::Ram::instructionStart < buffer.size(); ++i)
-		ASSERT_EQ(ram.GetAt(i), buffer[i - emu::Ram::instructionStart]);
-	for (size_t i = emu::Ram::instructionStart + buffer.size(); i < ram.GetSize(); ++i)
+	for (size_t i = ram.GetInstructionStartAddress(); i - ram.GetInstructionStartAddress() < buffer.size(); ++i)
+		ASSERT_EQ(ram.GetAt(i), buffer[i - ram.GetInstructionStartAddress()]);
+	for (size_t i = ram.GetInstructionStartAddress() + buffer.size(); i < ram.GetSize(); ++i)
 		ASSERT_EQ(ram.GetAt(i), 0);
 }
 

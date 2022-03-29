@@ -11,6 +11,7 @@ namespace emu
 	public:
 		virtual ~IRam() = default;
 		[[nodiscard]] virtual std::size_t GetSize() const = 0;
+		[[nodiscard]] virtual std::size_t GetInstructionStartAddress() const = 0;
 
 		virtual void Load(const std::string& buffer) = 0;
 

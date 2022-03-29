@@ -32,15 +32,13 @@ TEST_F(UtilityTests, ConstexprFor)
 
 	constexpr bool compileTimeTest = [&]() {
 		static_assert(a.size() == b.size());
-		utils::constexprFor<0, 4>([&](auto i) { static_assert((a[i] - b[b.size() - 1 - i]) < 1e-16); });
+		utils::ConstexprFor<0, 4>([&](auto i) { static_assert((a[i] - b[b.size() - 1 - i]) < 1e-16); });
 		return true;
 	}();
 	static_assert(compileTimeTest);
 
 	// runtime test
-	utils::constexprFor<0, 4>([&](auto i) {
-		ASSERT_DOUBLE_EQ(a[i], b[b.size() - 1 - i]);
-	});
+	utils::ConstexprFor<0, 4>([&](auto i) { ASSERT_DOUBLE_EQ(a[i], b[b.size() - 1 - i]); });
 }
 
 TEST_F(UtilityTests, LowerTwelveBits)
@@ -114,27 +112,28 @@ TEST_F(UtilityTests, GetBitAt)
 	constexpr emu::TwoBytes value = 0xFA2F;
 
 	constexpr bool compileTimeTest = [&]() {
-		utils::constexprFor<0, 8>([&](auto i)
-								  {
-									  if constexpr (i == 0)
-									    static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x0>::value);
-									  else if constexpr (i == 1)
-										  static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x0>::value);
-									  else if constexpr (i == 2)
-										  static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x20>::value);
-									  else if constexpr (i == 3)
-										  static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x0>::value);
-									  else if constexpr (i == 4)
-										  static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x8>::value);
-									  else if constexpr (i == 5)
-										  static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x4>::value);
-									  else if constexpr (i == 6)
-										  static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x2>::value);
-									  else if constexpr (i == 7)
-										  static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x1>::value);
-									  else
-										  static_assert(CompileTimeEqualityCheck<i, std::numeric_limits<decltype(i)>::max()>::value);
-								  });
+		utils::ConstexprFor<0, 8>(
+			[&](auto i)
+			{
+				if constexpr (i == 0)
+					static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x0>::value);
+				else if constexpr (i == 1)
+					static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x0>::value);
+				else if constexpr (i == 2)
+					static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x20>::value);
+				else if constexpr (i == 3)
+					static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x0>::value);
+				else if constexpr (i == 4)
+					static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x8>::value);
+				else if constexpr (i == 5)
+					static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x4>::value);
+				else if constexpr (i == 6)
+					static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x2>::value);
+				else if constexpr (i == 7)
+					static_assert(CompileTimeEqualityCheck<utils::GetBitAt<i>(value), 0x1>::value);
+				else
+					static_assert(CompileTimeEqualityCheck<i, std::numeric_limits<decltype(i)>::max()>::value);
+			});
 		return true;
 	}();
 	static_assert(compileTimeTest);

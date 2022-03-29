@@ -3,17 +3,26 @@
 
 #include "Types.h"
 #include <type_traits>
+#include <array>
 
 namespace utils
 {
 	template <auto Start, auto End, class F>
-	constexpr void constexprFor(F&& loopBody)
+	constexpr void ConstexprFor(F&& loopBody)
 	{
 		if constexpr (Start < End)
 		{
 			loopBody(std::integral_constant<decltype(Start), Start>());
-			constexprFor<Start + 1, End>(loopBody);
+			ConstexprFor<Start + 1, End>(loopBody);
 		}
+	}
+
+	template<typename T, std::size_t N>
+	constexpr std::array<T, N> FlatInitializedArray(const T value = T())
+	{
+		std::array<T, N> ret {};
+		ret.fill(value);
+		return ret;
 	}
 
 	namespace detail

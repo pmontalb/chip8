@@ -88,8 +88,9 @@ namespace emu
 		TwoBytes _indexRegister = 0;		// index register
 
 		Byte _stackPointer = 0;
-		std::array<Byte, stackSize> _stack {};
-		std::array<Byte, registerSize> _registers {};	// general-purpose register
+		std::array<TwoBytes, stackSize> _stack = utils::FlatInitializedArray<TwoBytes, stackSize>(0x0);
+		// general-purpose register
+		std::array<Byte, registerSize> _registers = utils::FlatInitializedArray<Byte, stackSize>(0x0);
 
 		Byte _delayTimer = 0;
 		Byte _soundTimer = 0;

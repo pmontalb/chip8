@@ -2,45 +2,45 @@
 #include "IgnoreWarning.h"
 
 #ifdef __clang__
-#define __IGNORE_MAHI_GUI_WARNINGS__ \
-	__IGNORE_WARNING__("-Wsign-conversion") \
-	__IGNORE_WARNING__("-Wfloat-equal")  \
-	__IGNORE_WARNING__("-Wold-style-cast") \
-	__IGNORE_WARNING__("-Wdouble-promotion") \
-	__IGNORE_WARNING__("-Wnewline-eof")    \
-	__IGNORE_WARNING__("-Wdocumentation-unknown-command") \
-	__IGNORE_WARNING__("-Wdocumentation")\
-	__IGNORE_WARNING__("-Wgnu-anonymous-struct")    \
-	__IGNORE_WARNING__("-Wnested-anon-types")       \
-	__IGNORE_WARNING__("-Wunused-parameter")\
-	__IGNORE_WARNING__("-Wmissing-braces")  \
-	__IGNORE_WARNING__("-Wnon-virtual-dtor")\
-	__IGNORE_WARNING__("-Wundef")        \
-	__IGNORE_WARNING__("-Wimplicit-float-conversion") \
-	__IGNORE_WARNING__("-Wimplicit-int-float-conversion")          \
-	__IGNORE_WARNING__("-Wzero-as-null-pointer-constant") \
-	__IGNORE_WARNING__("-Wdeprecated-copy-dtor")    \
-	__IGNORE_WARNING__("-Wextra-semi")   \
-	__IGNORE_WARNING__("-Wundefined-func-template") \
-	__IGNORE_WARNING__("-Wshadow-field-in-constructor")
+	#define __IGNORE_MAHI_GUI_WARNINGS__                                                                               \
+		__IGNORE_WARNING__("-Wsign-conversion")                                                                        \
+		__IGNORE_WARNING__("-Wfloat-equal")                                                                            \
+		__IGNORE_WARNING__("-Wold-style-cast")                                                                         \
+		__IGNORE_WARNING__("-Wdouble-promotion")                                                                       \
+		__IGNORE_WARNING__("-Wnewline-eof")                                                                            \
+		__IGNORE_WARNING__("-Wdocumentation-unknown-command")                                                          \
+		__IGNORE_WARNING__("-Wdocumentation")                                                                          \
+		__IGNORE_WARNING__("-Wgnu-anonymous-struct")                                                                   \
+		__IGNORE_WARNING__("-Wnested-anon-types")                                                                      \
+		__IGNORE_WARNING__("-Wunused-parameter")                                                                       \
+		__IGNORE_WARNING__("-Wmissing-braces")                                                                         \
+		__IGNORE_WARNING__("-Wnon-virtual-dtor")                                                                       \
+		__IGNORE_WARNING__("-Wundef")                                                                                  \
+		__IGNORE_WARNING__("-Wimplicit-float-conversion")                                                              \
+		__IGNORE_WARNING__("-Wimplicit-int-float-conversion")                                                          \
+		__IGNORE_WARNING__("-Wzero-as-null-pointer-constant")                                                          \
+		__IGNORE_WARNING__("-Wdeprecated-copy-dtor")                                                                   \
+		__IGNORE_WARNING__("-Wextra-semi")                                                                             \
+		__IGNORE_WARNING__("-Wundefined-func-template")                                                                \
+		__IGNORE_WARNING__("-Wshadow-field-in-constructor")
 #else
-#define __IGNORE_MAHI_GUI_WARNINGS__ \
-	__IGNORE_WARNING__("-Wshadow")       \
-	__IGNORE_WARNING__("-Wfloat-equal")  \
-	__IGNORE_WARNING__("-Wold-style-cast") \
-	__IGNORE_WARNING__("-Wpedantic")     \
-	__IGNORE_WARNING__("-Wunused-parameter") \
-	__IGNORE_WARNING__("-Weffc++")       \
-	__IGNORE_WARNING__("-Wnon-virtual-dtor") \
-	__IGNORE_WARNING__("-Wconversion")   \
-	__IGNORE_WARNING__("-Wuseless-cast") \
-	__IGNORE_WARNING__("-Wextra-semi")   \
-	__IGNORE_WARNING__("-Wsuggest-override") \
-	__IGNORE_WARNING__("-Wctor-dtor-privacy")\
-	__IGNORE_WARNING__("-Wuseless-cast") \
-	__IGNORE_WARNING__("-Wdeprecated")  \
-    __IGNORE_WARNING__("-Wredundant-tags")\
-	__IGNORE_WARNING__("-Wdouble-promotion")
+	#define __IGNORE_MAHI_GUI_WARNINGS__                                                                               \
+		__IGNORE_WARNING__("-Wshadow")                                                                                 \
+		__IGNORE_WARNING__("-Wfloat-equal")                                                                            \
+		__IGNORE_WARNING__("-Wold-style-cast")                                                                         \
+		__IGNORE_WARNING__("-Wpedantic")                                                                               \
+		__IGNORE_WARNING__("-Wunused-parameter")                                                                       \
+		__IGNORE_WARNING__("-Weffc++")                                                                                 \
+		__IGNORE_WARNING__("-Wnon-virtual-dtor")                                                                       \
+		__IGNORE_WARNING__("-Wconversion")                                                                             \
+		__IGNORE_WARNING__("-Wuseless-cast")                                                                           \
+		__IGNORE_WARNING__("-Wextra-semi")                                                                             \
+		__IGNORE_WARNING__("-Wsuggest-override")                                                                       \
+		__IGNORE_WARNING__("-Wctor-dtor-privacy")                                                                      \
+		__IGNORE_WARNING__("-Wuseless-cast")                                                                           \
+		__IGNORE_WARNING__("-Wdeprecated")                                                                             \
+		__IGNORE_WARNING__("-Wredundant-tags")                                                                         \
+		__IGNORE_WARNING__("-Wdouble-promotion")
 #endif
 
 __START_IGNORING_WARNINGS__
@@ -58,8 +58,8 @@ __STOP_IGNORING_WARNINGS__
 #include <thread>
 
 static const std::unordered_map<spdlog::level::level_enum, mahi::gui::Color> logColors = {
-	{ spdlog::level::trace, mahi::gui::Greens::LimeGreen },	{ spdlog::level::debug, mahi::gui::Greens::LightGreen },
-	{ spdlog::level::info, mahi::gui::Whites::White }, { spdlog::level::warn, mahi::gui::Yellows::Yellow },
+	{ spdlog::level::trace, mahi::gui::Greens::LimeGreen }, { spdlog::level::debug, mahi::gui::Greens::LightGreen },
+	{ spdlog::level::info, mahi::gui::Whites::White },		{ spdlog::level::warn, mahi::gui::Yellows::Yellow },
 	{ spdlog::level::err, mahi::gui::Oranges::OrangeRed },	{ spdlog::level::critical, mahi::gui::Reds::Crimson },
 };
 
@@ -77,45 +77,58 @@ static auto RegisterRingBufferSink()
 }
 
 // keyboard mapping
-static inline emu::Keys::Enum GetKeyPressed()
+namespace detail
 {
-	if (ImGui::IsKeyPressed(GLFW_KEY_1))
-		return emu::Keys::One;
-	if (ImGui::IsKeyPressed(GLFW_KEY_2))
-		return emu::Keys::Two;
-	if (ImGui::IsKeyPressed(GLFW_KEY_3))
-		return emu::Keys::Three;
-	if (ImGui::IsKeyPressed(GLFW_KEY_4))
-		return emu::Keys::C;
+	template<typename ImGuiOp>
+	static inline std::bitset<emu::Keys::END> GetKeyPressedOrReleasedWorker(ImGuiOp&& op, bool toggle)
+	{
+		std::bitset<emu::Keys::END> ret;
+		if (op(GLFW_KEY_1))
+			ret[emu::Keys::One] = toggle;
+		if (op(GLFW_KEY_2))
+			ret[emu::Keys::Two] = toggle;
+		if (op(GLFW_KEY_3))
+			ret[emu::Keys::Three] = toggle;
+		if (op(GLFW_KEY_4))
+			ret[emu::Keys::C] = toggle;
 
-	if (ImGui::IsKeyPressed(GLFW_KEY_Q))
-		return emu::Keys::Four;
-	if (ImGui::IsKeyPressed(GLFW_KEY_W))
-		return emu::Keys::Five;
-	if (ImGui::IsKeyPressed(GLFW_KEY_E))
-		return emu::Keys::Six;
-	if (ImGui::IsKeyPressed(GLFW_KEY_R))
-		return emu::Keys::D;
+		if (op(GLFW_KEY_Q))
+			ret[emu::Keys::Four] = toggle;
+		if (op(GLFW_KEY_W))
+			ret[emu::Keys::Five] = toggle;
+		if (op(GLFW_KEY_E))
+			ret[emu::Keys::Six] = toggle;
+		if (op(GLFW_KEY_R))
+			ret[emu::Keys::D] = toggle;
 
-	if (ImGui::IsKeyPressed(GLFW_KEY_A))
-		return emu::Keys::Seven;
-	if (ImGui::IsKeyPressed(GLFW_KEY_S))
-		return emu::Keys::Eight;
-	if (ImGui::IsKeyPressed(GLFW_KEY_D))
-		return emu::Keys::Nine;
-	if (ImGui::IsKeyPressed(GLFW_KEY_F))
-		return emu::Keys::E;
+		if (op(GLFW_KEY_A))
+			ret[emu::Keys::Seven] = toggle;
+		if (op(GLFW_KEY_S))
+			ret[emu::Keys::Eight] = toggle;
+		if (op(GLFW_KEY_D))
+			ret[emu::Keys::Nine] = toggle;
+		if (op(GLFW_KEY_F))
+			ret[emu::Keys::E] = toggle;
 
-	if (ImGui::IsKeyPressed(GLFW_KEY_Z))
-		return emu::Keys::A;
-	if (ImGui::IsKeyPressed(GLFW_KEY_X))
-		return emu::Keys::Zero;
-	if (ImGui::IsKeyPressed(GLFW_KEY_C))
-		return emu::Keys::B;
-	if (ImGui::IsKeyPressed(GLFW_KEY_V))
-		return emu::Keys::F;
+		if (op(GLFW_KEY_Z))
+			ret[emu::Keys::A] = toggle;
+		if (op(GLFW_KEY_X))
+			ret[emu::Keys::Zero] = toggle;
+		if (op(GLFW_KEY_C))
+			ret[emu::Keys::B] = toggle;
+		if (op(GLFW_KEY_V))
+			ret[emu::Keys::F] = toggle;
 
-	return emu::Keys::END;
+		return ret;
+	}
+}
+static inline auto GetKeysPressed()
+{
+	return detail::GetKeyPressedOrReleasedWorker([](int x) { return ImGui::IsKeyPressed(x); }, true);
+}
+static inline auto GetKeysReleased()
+{
+	return detail::GetKeyPressedOrReleasedWorker([](int x) { return ImGui::IsKeyReleased(x); }, true);
 }
 
 static void ShowExampleMenuFile()
@@ -227,15 +240,19 @@ __IGNORE_WARNING__("-Wold-style-cast")
 class ChipEightEmulator: public mahi::gui::Application
 {
 public:
-	explicit ChipEightEmulator(const mahi::gui::Application::Config& config, std::shared_ptr<utils::RingBufferSinkSt> sink)
+	explicit ChipEightEmulator(const mahi::gui::Application::Config& config,
+							   std::shared_ptr<utils::RingBufferSinkSt> sink)
 		: Application(config), _sink(std::move(sink))
 	{
 		spdlog::set_level(logLevel);
+		glfwSwapInterval(0);
 
-//		_emulator.LoadRom("/home/raiden/programming/chip8/UnitTests/Data/test_opcode.ch8");
-//		_emulator.LoadRom("/home/raiden/programming/chip8/Roms/Maze.ch8");
-		_emulator.LoadRom("/home/raiden/programming/chip8/Roms/PONG");
-//		const_cast<emu::Display&>(_emulator.GetDisplay()).Clear();
+		//		_emulator.LoadRom("/home/raiden/programming/chip8/UnitTests/Data/test_opcode.ch8");
+		//		_emulator.LoadRom("/home/raiden/programming/chip8/Roms/MAZE");
+		//		_emulator.LoadRom("/home/raiden/programming/chip8/Roms/CONNECT4");
+		//		_emulator.LoadRom("/home/raiden/programming/chip8/Roms/PONG");
+		//		_emulator.LoadRom("/home/raiden/programming/chip8/Roms/TETRIS");
+		//		const_cast<emu::Display&>(_emulator.GetDisplay()).Clear();
 	}
 	virtual ~ChipEightEmulator() = default;
 
@@ -637,7 +654,8 @@ private:
 		ImGui::Begin("Debug", &open);
 		if (ImGui::BeginCombo("Debug Level", to_string_view(logLevel).data()))
 		{
-			for (auto level: { spdlog::level::off, spdlog::level::critical, spdlog::level::err, spdlog::level::warn, spdlog::level::info, spdlog::level::debug, spdlog::level::trace })
+			for (auto level : { spdlog::level::off, spdlog::level::critical, spdlog::level::err, spdlog::level::warn,
+								spdlog::level::info, spdlog::level::debug, spdlog::level::trace })
 			{
 				if (ImGui::Selectable(to_string_view(level).data(), level == logLevel))
 				{
@@ -676,98 +694,174 @@ private:
 	{
 		setUpDebuggingWindow();
 
-		ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_Appearing);
-		ImGui::Begin("Chip8 Emulator", &open);
+//		ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_Appearing);
+//		ImGui::Begin("Chip8 Emulator", &open);
 
-//		if (ImGui::GetIO().DeltaTime)
-		ImGui::Text("%.2f FPS", static_cast<double>(ImGui::GetIO().Framerate));
-
-		if (ImGui::Button("Play"))
-			_running = true;
-		if (ImGui::Button("Stop"))
-			_running = false;
-
-		const bool stepping = ImGui::Button("Step");
-		const bool rewinding = ImGui::Button("Rewind");
-		if (stepping || rewinding)
-			_running = false;
-		if (rewinding)
+		if (ImGui::BeginPopupContextItem())
 		{
-			_emulator.Rewind();
-		}
-		else if (_running || stepping)
-		{
-			bool success = _emulator.Cycle();
-			if (stopOnError && !success)
-			{
-				_running = false;
-			}
+			if (ImGui::MenuItem("Close"))
+				open = false;
+			ImGui::EndPopup();
 		}
 
-		auto* drawList = ImGui::GetWindowDrawList();
-		auto p = ImGui::GetCursorScreenPos();
-		drawList->AddRect(p,
-						  { p.x + 2.0f * xPadding + static_cast<float>(_emulator.GetDisplay().GetWidth()) * pixelSize,
-							p.y + 2.0f * yPadding + static_cast<float>(_emulator.GetDisplay().GetHeight()) * pixelSize },
-						  frameColor);
-		p.x += xPadding;
-		p.y += yPadding;
-
-		if (_emulator.GetDisplay().HasChanged())
+		if (ImGui::BeginMainMenuBar())
 		{
-			for (size_t row = 0; row < _emulator.GetDisplay().GetWidth(); ++row)
+			if (ImGui::BeginMenu("File"))
 			{
-				auto pixelStart = p;
-				pixelStart.x = p.x + static_cast<float>(row) * pixelSize;
-
-				for (size_t col = 0; col < _emulator.GetDisplay().GetHeight(); ++col)
+				ImGui::MenuItem("(demo menu)", nullptr, false, false);
+				if (ImGui::MenuItem("New"))
 				{
-					pixelStart.y = p.y + static_cast<float>(col) * pixelSize;
-					ImVec2 pixelEnd = { pixelStart.x + pixelSize, pixelStart.y + pixelSize };
-					const size_t coord = row + col * _emulator.GetDisplay().GetWidth();
-					if (_emulator.GetDisplay().GetAt(coord))
-						drawList->AddRectFilled(pixelStart, pixelEnd, pixelColor);
+				}
+				if (ImGui::MenuItem("Open", "Ctrl+O"))
+				{
+				}
+				if (ImGui::BeginMenu("Open Recent"))
+				{
+					ImGui::MenuItem("fish_hat.c");
+					ImGui::MenuItem("fish_hat.inl");
+					ImGui::MenuItem("fish_hat.h");
+					if (ImGui::BeginMenu("More.."))
+					{
+						ImGui::MenuItem("Hello");
+						ImGui::MenuItem("Sailor");
+						if (ImGui::BeginMenu("Recurse.."))
+						{
+							ShowExampleMenuFile();
+							ImGui::EndMenu();
+						}
+						ImGui::EndMenu();
+					}
+					ImGui::EndMenu();
+				}
+				if (ImGui::MenuItem("Save", "Ctrl+S"))
+				{
+				}
+				if (ImGui::MenuItem("Save As.."))
+				{
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+		}
+
+			if (ImGui::TreeNode("Context menus"))
+			{
+				static float value = 0.5f;
+				ImGui::Text("Value = %.3f (<-- right-click here)", static_cast<double>(value));
+				if (ImGui::BeginPopupContextItem("item context menu"))
+				{
+					if (ImGui::Selectable("Set to zero"))
+						value = 0.0f;
+					if (ImGui::Selectable("Set to PI"))
+						value = 3.1415f;
+					ImGui::SetNextItemWidth(-1);
+					ImGui::DragFloat("##Value", &value, 0.1f, 0.0f, 0.0f);
+					ImGui::EndPopup();
+				}
+				ImGui::TreePop();
+			}
+
+			//		if (ImGui::GetIO().DeltaTime)
+			ImGui::Text("%.2f FPS", static_cast<double>(ImGui::GetIO().Framerate));
+
+			if (ImGui::Button("Play"))
+				_running = true;
+			if (ImGui::Button("Stop"))
+				_running = false;
+
+
+			const bool stepping = ImGui::Button("Step");
+			const bool rewinding = ImGui::Button("Rewind");
+			if (stepping || rewinding)
+				_running = false;
+			if (rewinding)
+			{
+				_emulator.Rewind();
+			}
+			else if (_running || stepping)
+			{
+				auto pressedKeys = GetKeysPressed();
+				auto releasedKeys = GetKeysReleased();
+				for (size_t k = emu::Keys::START; k < emu::Keys::END; ++k)
+				{
+					if (pressedKeys[k])
+						_emulator.GetKeypad().Press(static_cast<emu::Keys::Enum>(k), true);
+					else if (releasedKeys[k])
+						_emulator.GetKeypad().Press(static_cast<emu::Keys::Enum>(k), false);
+				}
+
+				bool success = _emulator.Cycle();
+				if (stopOnError && !success)
+				{
+					_running = false;
 				}
 			}
+
+			auto* drawList = ImGui::GetWindowDrawList();
+			auto p = ImGui::GetCursorScreenPos();
+			drawList->AddRect(
+				p,
+				{ p.x + 2.0f * xPadding + static_cast<float>(_emulator.GetDisplay().GetWidth()) * pixelSize,
+				  p.y + 2.0f * yPadding + static_cast<float>(_emulator.GetDisplay().GetHeight()) * pixelSize },
+				frameColor);
+			p.x += xPadding;
+			p.y += yPadding;
+
+			if (_emulator.GetDisplay().HasChanged())
+			{
+				for (size_t row = 0; row < _emulator.GetDisplay().GetWidth(); ++row)
+				{
+					auto pixelStart = p;
+					pixelStart.x = p.x + static_cast<float>(row) * pixelSize;
+
+					for (size_t col = 0; col < _emulator.GetDisplay().GetHeight(); ++col)
+					{
+						pixelStart.y = p.y + static_cast<float>(col) * pixelSize;
+						ImVec2 pixelEnd = { pixelStart.x + pixelSize, pixelStart.y + pixelSize };
+						const size_t coord = row + col * _emulator.GetDisplay().GetWidth();
+						if (_emulator.GetDisplay().GetAt(coord))
+							drawList->AddRectFilled(pixelStart, pixelEnd, pixelColor);
+					}
+				}
+			}
+
+//			ImGui::End();
+
+			if (!open)
+				quit();
 		}
 
-		ImGui::End();
 
-		if (!open)
-			quit();
+	private:
+		std::shared_ptr<utils::RingBufferSinkSt> _sink {};
+		bool open = true;
+		emu::Chip8 _emulator {};
+		ImGuiTextFilter filter {};
+
+		ImU32 pixelColor { IM_COL32(255, 0, 0, 255) };
+		ImU32 frameColor { IM_COL32(255, 255, 255, 255) };
+		float pixelSize = 4.0f;
+		float xPadding = 50.0f;
+		float yPadding = 50.0f;
+		spdlog::level::level_enum logLevel = spdlog::level::warn;
+		bool stopOnError = true;
+
+		bool _running = false;
+	};
+
+	int main(int /*argc*/, char** /*argv*/)
+	{
+		auto sink = RegisterRingBufferSink();
+		spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
+		mahi::gui::Application::Config config;
+		config.fullscreen = false;
+		config.msaa = 0;
+		config.nvg_aa = false;
+		config.monitor = 1;
+		config.title = "Chip8 Emulator";
+		config.background = mahi::gui::Colors::Auto;
+		ChipEightEmulator app(config, sink);
+		app.run();
+		return 0;
 	}
-
-
-private:
-	std::shared_ptr<utils::RingBufferSinkSt> _sink{};
-	bool open = true;
-	emu::Chip8 _emulator{};
-	ImGuiTextFilter filter{};
-
-	ImU32 pixelColor { IM_COL32(255, 0, 0, 255) };
-	ImU32 frameColor { IM_COL32(255, 255, 255, 255) };
-	float pixelSize = 4.0f;
-	float xPadding = 50.0f;
-	float yPadding = 50.0f;
-	spdlog::level::level_enum logLevel = spdlog::level::warn;
-	bool stopOnError = true;
-
-	bool _running = false;
-};
-
-int main(int /*argc*/, char** /*argv*/)
-{
-	auto sink = RegisterRingBufferSink();
-	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
-
-	mahi::gui::Application::Config config;
-	config.fullscreen = false;
-	config.msaa = 0;
-	config.nvg_aa = false;
-	config.monitor = 1;
-	config.title = "Chip8 Emulator";
-	config.background = mahi::gui::Colors::Auto;
-	ChipEightEmulator app(config, sink);
-	app.run();
-	return 0;
-}

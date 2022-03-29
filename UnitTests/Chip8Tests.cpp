@@ -19,6 +19,7 @@ struct TestRam final: public emu::IRam
 	std::vector<emu::Byte> fonts {};
 
 	[[nodiscard]] std::size_t GetSize() const override { return data.size(); }
+	[[nodiscard]] std::size_t GetInstructionStartAddress() const override { return 0; }
 
 	void Load(const std::string& /*buffer*/) override {}
 
@@ -109,7 +110,7 @@ public:
 TEST_F(Chip8Tests, Initialization)
 {
 	TestChip8 chip8;
-	ASSERT_EQ(chip8._cpu.GetProgramCounter(), emu::Ram::instructionStart);
+	ASSERT_EQ(chip8._cpu.GetProgramCounter(), chip8._ram.GetInstructionStartAddress());
 	ASSERT_TRUE(std::all_of(chip8._display.GetPixels().begin(), chip8._display.GetPixels().end(), [](auto pixel) { return !pixel; }));
 }
 
@@ -268,13 +269,19 @@ TEST_F(Chip8Tests, ExecuteInstruction0xFxyz)
 
 TEST_F(Chip8Tests, TestOpCode)
 {
-	spdlog::set_level(spdlog::level::info);
-	emu::Chip8 chip8;
+//	spdlog::set_level(spdlog::level::trace);
+//	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
+	struct Chip8: public emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>
+	{
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_cpu;
+	};
+	Chip8 chip8;
 
 	auto* dataPath = std::getenv("DATA_PATH");
 	ASSERT_NE(dataPath, nullptr);
 	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/test_opcode.ch8"));
 
 	for (size_t i = 0; i < 5000; ++i)
-		ASSERT_TRUE(chip8.Cycle());
+		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
 }

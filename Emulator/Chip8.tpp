@@ -9,13 +9,13 @@ namespace emu::detail
 	static inline const std::function<void(const TwoBytes)> invalidInstruction = [](const TwoBytes instruction)
 	{
 		LOG_CRITICAL("this instruction({}) shouldn't be called", instruction);
-//		assert(false);
+		//		assert(false);
 	};
 
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
 	Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::Chip8()
 	{
-		_cpu.SetProgramCounter(Ram::instructionStart);
+		_cpu.SetProgramCounter(static_cast<TwoBytes>(_ram.GetInstructionStartAddress()));
 		LOG_TRACE("Chip8 created and pc={}", _cpu.GetProgramCounter());
 		PopulateInstructionSetFunctionPointers();
 	}
@@ -78,10 +78,10 @@ namespace emu::detail
 									 [this](const TwoBytes) { this->_cpu.ReturnFromSubRoutine(); } };
 
 		_0xExyzInstructions.fill({ Instruction::INVALID, invalidInstruction });
-		_0xExyzInstructions[0x1] = { detail::_0xExyzInstructions[0x1],
-									 [this](const TwoBytes instruction) { this->_cpu.ConditionalSkipIfKeyPressed(instruction, this->_keypad); } };
-		_0xExyzInstructions[0xE] = { detail::_0xExyzInstructions[0xE],
-									 [this](const TwoBytes instruction) { this->_cpu.ConditionalSkipIfKeyNotPressed(instruction, this->_keypad); } };
+		_0xExyzInstructions[0x1] = { detail::_0xExyzInstructions[0x1], [this](const TwoBytes instruction)
+									 { this->_cpu.ConditionalSkipIfKeyPressed(instruction, this->_keypad); } };
+		_0xExyzInstructions[0xE] = { detail::_0xExyzInstructions[0xE], [this](const TwoBytes instruction)
+									 { this->_cpu.ConditionalSkipIfKeyNotPressed(instruction, this->_keypad); } };
 
 		_0xFxyzInstructions.fill({ Instruction::INVALID, invalidInstruction });
 		_0xFxyzInstructions[0x07] = { detail::_0xFxyzInstructions[0x07],
@@ -102,6 +102,114 @@ namespace emu::detail
 									  { this->_cpu.StoreRegistersInRam(instruction, this->_ram); } };
 		_0xFxyzInstructions[0x65] = { detail::_0xFxyzInstructions[0x65], [this](const TwoBytes instruction)
 									  { this->_cpu.LoadRegistersFromRam(instruction, this->_ram); } };
+
+		utils::ConstexprFor<0, 0x10>(
+			[&](const auto i)
+			{
+				if constexpr (i == 0)
+				{
+					_instructionSet[i] = {
+						Instruction::INVALID,
+						[&](const TwoBytes instruction)
+						{
+							const auto lowestFourBits = utils::LowestFourBits(instruction);
+							if (lowestFourBits >= _0x00EkInstructions.size())
+							{
+								LOG_CRITICAL(
+									"instruction({0:d}|{0:X}) msb({1:d}|{1:X}): 0x00E{1:X} -> illegal instruction",
+									instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul));
+								_lastError = Error::InvalidInstruction;
+								return;
+							}
+
+							LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lowestFourBits({2:d}|{2:X}) 0x00E{2:X}",
+									 instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lowestFourBits);
+							_0x00EkInstructions[lowestFourBits].second(instruction);
+							_lastExecutedInstruction = _0x00EkInstructions[lowestFourBits].first;
+						}
+					};
+				}
+				else if constexpr (i == 8)
+				{
+					_instructionSet[i] = {
+						Instruction::INVALID,
+						[&](const TwoBytes instruction)
+						{
+							const auto lastFourBits = utils::LowestFourBits(instruction);
+							if (lastFourBits >= _0x80xyInstructions.size())
+							{
+								LOG_CRITICAL(
+									"instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lastFourBits({1:X}): 0x80{1:X} -> illegal instruction",
+									instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lastFourBits);
+								_lastError = Error::InvalidInstruction;
+								return;
+							}
+							LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0x8xy{2:X}",
+									 instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lastFourBits);
+							_0x80xyInstructions[lastFourBits].second(instruction);
+							_lastExecutedInstruction = _0x80xyInstructions[lastFourBits].first;
+						}
+					};
+				}
+				else if constexpr (i == 0xE)
+				{
+					_instructionSet[i] = {
+						Instruction::INVALID,
+						[&](const TwoBytes instruction)
+						{
+							const auto lastFourBits = utils::LowestFourBits(instruction);
+							if (lastFourBits >= _0xExyzInstructions.size())
+							{
+								LOG_CRITICAL(
+									"instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lastFourBits({1:X}): 0xExy{1:X} -> illegal instruction",
+									instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lastFourBits);
+								_lastError = Error::InvalidInstruction;
+								return;
+							}
+							LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0xExy{2:X}",
+									 instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lastFourBits);
+							_0xExyzInstructions[lastFourBits].second(instruction);
+							_lastExecutedInstruction = _0xExyzInstructions[lastFourBits].first;
+						}
+					};
+				}
+				else if constexpr (i == 0xF)
+				{
+					_instructionSet[i] = {
+						Instruction::INVALID,
+						[&](const TwoBytes instruction)
+						{
+							const auto lowestByte = utils::LowestByte(instruction);
+							if (lowestByte >= _0xFxyzInstructions.size())
+							{
+								LOG_CRITICAL(
+									"instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lowestByte(1:X): 0xFx{2:X} -> illegal instruction",
+									instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lowestByte);
+								_lastError = Error::InvalidInstruction;
+								return;
+							}
+							LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0xFx{2:X}",
+									 instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lowestByte);
+							_0xFxyzInstructions[lowestByte].second(instruction);
+							_lastExecutedInstruction = _0xFxyzInstructions[lowestByte].first;
+						}
+					};
+				}
+				else
+				{
+					_instructionSet[i] = { Instruction::INVALID, [&](const TwoBytes instruction)
+										   {
+											   const auto mostSignificantBit =
+												   static_cast<Byte>((instruction & 0xF000ul) >> 12ul);
+
+											   LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) 0x{1:X}xyz",
+														instruction, mostSignificantBit);
+											   _uniquePatternInstructions[mostSignificantBit].second(instruction);
+											   _lastExecutedInstruction =
+												   _uniquePatternInstructions[mostSignificantBit].first;
+										   } };
+				}
+			});
 	}
 
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
@@ -123,7 +231,7 @@ namespace emu::detail
 		std::string buffer;
 		buffer.resize(static_cast<std::size_t>(file.tellg()));
 		LOG_TRACE("buffer size({})", buffer.size());
-		assert(buffer.size() < _ram.GetSize() - Ram::instructionStart);
+		assert(buffer.size() < _ram.GetSize() - _ram.GetInstructionStartAddress());
 
 		// Go back to the beginning of the file and fill the buffer
 		file.seekg(0, std::ios::beg);
@@ -137,8 +245,17 @@ namespace emu::detail
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
 	bool Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::Cycle()
 	{
+		if (!IsValid())
+			return false;
+
 		const auto instruction = FetchInstruction();
 		LOG_TRACE("fetched instruction({0:d}|{0:X})", instruction);
+
+		if (_cpu.GetProgramCounter() < _ram.GetInstructionStartAddress())
+		{
+			_lastError = Error::InvalidProgramCounter;
+			return false;
+		}
 
 		// pc += 2
 		_cpu.AdvanceProgramCounter();
@@ -225,108 +342,8 @@ namespace emu::detail
 		// zero out the first 3 nibbles and shift it down by 12 bits
 		const auto mostSignificantBit = static_cast<Byte>((instruction & 0xF000ul) >> 12ul);
 		LOG_TRACE("instruction({0:d}|{0:X}): msb({1:d}|{1:X})", instruction, mostSignificantBit);
+		_instructionSet[mostSignificantBit].second(instruction);
 
-		switch (mostSignificantBit)
-		{
-			// 0x0*** instructions
-			case 0x0:
-			{
-				const auto lowestFourBits = utils::LowestFourBits(instruction);
-				if (lowestFourBits >= _0x00EkInstructions.size())
-				{
-					LOG_CRITICAL("instruction({0:d}|{0:X}) msb({1:d}|{1:X}): 0x00E{1:X} -> illegal instruction", instruction,
-								 mostSignificantBit);
-					return false;
-				}
-
-				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lowestFourBits({2:d}|{2:X}) 0x00E{2:X}",
-						  instruction, mostSignificantBit, lowestFourBits);
-				_0x00EkInstructions[lowestFourBits].second(instruction);
-				_lastExecutedInstruction = _0x00EkInstructions[lowestFourBits].first;
-				break;
-			}
-
-			case 0x1:
-			case 0x2:
-			case 0x3:
-			case 0x4:
-			case 0x5:
-			case 0x6:
-			case 0x7:
-			case 0x9:
-			case 0xA:
-			case 0xB:
-			case 0xC:
-			case 0xD:
-				if (mostSignificantBit >= _uniquePatternInstructions.size())
-				{
-					LOG_CRITICAL("instruction({0:d}|{0:X}) msb({1:d}|{1:X}): illegal instruction", instruction,
-								 mostSignificantBit);
-					return false;
-				}
-				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) 0x{1:X}xyz", instruction, mostSignificantBit);
-				_uniquePatternInstructions[mostSignificantBit].second(instruction);
-				_lastExecutedInstruction = _uniquePatternInstructions[mostSignificantBit].first;
-				break;
-
-			// 0x8*** instructions
-			case 0x8:
-			{
-				const auto lastFourBits = utils::LowestFourBits(instruction);
-				if (lastFourBits >= _0x80xyInstructions.size())
-				{
-					LOG_CRITICAL("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lastFourBits({1:X}): 0x80{1:X} -> illegal instruction", instruction,
-								 mostSignificantBit, lastFourBits);
-					return false;
-				}
-				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0x8xy{2:X}",
-						  instruction, mostSignificantBit, lastFourBits);
-				_0x80xyInstructions[lastFourBits].second(instruction);
-				_lastExecutedInstruction = _0x80xyInstructions[lastFourBits].first;
-				break;
-			}
-
-			// 0xE*** instructions
-			case 0xE:
-			{
-				const auto lastFourBits = utils::LowestFourBits(instruction);
-				if (lastFourBits >= _0xExyzInstructions.size())
-				{
-					LOG_CRITICAL("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lastFourBits({1:X}): 0xExy{1:X} -> illegal instruction", instruction,
-								 mostSignificantBit, lastFourBits);
-					return false;
-				}
-				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0xExy{2:X}",
-						  instruction, mostSignificantBit, lastFourBits);
-				_0xExyzInstructions[lastFourBits].second(instruction);
-				_lastExecutedInstruction = _0xExyzInstructions[lastFourBits].first;
-				break;
-			}
-
-			// 0xF*** instructions
-			case 0xF:
-			{
-				const auto lowestByte = utils::LowestByte(instruction);
-				if (lowestByte >= _0xFxyzInstructions.size())
-				{
-					LOG_CRITICAL("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lowestByte(1:X): 0xFx{2:X} -> illegal instruction", instruction,
-								 mostSignificantBit, lowestByte);
-					return false;
-				}
-				LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0xFx{2:X}",
-						  instruction, mostSignificantBit, lowestByte);
-				_0xFxyzInstructions[lowestByte].second(instruction);
-				_lastExecutedInstruction = _0xFxyzInstructions[lowestByte].first;
-				break;
-			}
-
-			default:
-				LOG_CRITICAL("instruction({0:d}|{0:X}) msb({1:d}|{1:X}): illegal instruction", instruction,
-							 mostSignificantBit);
-//				assert(false);
-				return false;
-		}
-
-		return true;
+		return IsValid();
 	}
 }	 // namespace emu::detail

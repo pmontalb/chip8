@@ -7,6 +7,8 @@
 #include "Ram.h"
 #include "Rng.h"
 
+#include "Error.h"
+
 #include "InstructionSet.h"
 
 #include <filesystem>
@@ -28,6 +30,10 @@ namespace emu
 			Instruction GetLastExecutedInstruction() const { return _lastExecutedInstruction; }
 
 			const auto& GetDisplay() const { return _display; }
+			auto& GetKeypad() { return _keypad; }
+
+			[[nodiscard]] bool IsValid() const { return _lastError == Error::None; }
+			[[nodiscard]] auto GetLastError() const { return _lastError; }
 
 		protected:
 			TwoBytes FetchInstruction();
@@ -53,6 +59,11 @@ namespace emu
 			std::array<InstructionPair, detail::_0x00EkInstructions.size()> _0x00EkInstructions{};
 			std::array<InstructionPair, detail::_0xExyzInstructions.size()> _0xExyzInstructions{};
 			std::array<InstructionPair, detail::_0xFxyzInstructions.size()> _0xFxyzInstructions{};
+
+			static constexpr size_t functionTableSize = 0x10;
+			std::array<InstructionPair, functionTableSize> _instructionSet{};
+
+			Error _lastError = Error::None;
 		};
 	}	 // namespace detail
 
