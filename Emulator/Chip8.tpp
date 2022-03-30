@@ -15,8 +15,7 @@ namespace emu::detail
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
 	Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::Chip8()
 	{
-		_cpu.SetProgramCounter(static_cast<TwoBytes>(_ram.GetInstructionStartAddress()));
-		LOG_TRACE("Chip8 created and pc={}", _cpu.GetProgramCounter());
+		Initialize();
 		PopulateInstructionSetFunctionPointers();
 	}
 
@@ -213,6 +212,16 @@ namespace emu::detail
 	}
 
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
+	void Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::Initialize()
+	{
+		_cpu = CpuT{};
+		_display = DisplayT{};
+		_keypad = KeypadT{};
+
+		_cpu.SetProgramCounter(static_cast<TwoBytes>(_ram.GetInstructionStartAddress()));
+		LOG_TRACE("Chip8 created and pc={}", _cpu.GetProgramCounter());
+	}
+	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
 	bool Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::LoadRom(const std::filesystem::path& path)
 	{
 		if (!std::filesystem::exists(path))
@@ -226,6 +235,8 @@ namespace emu::detail
 			LOG_CRITICAL("file({}) couldn't be opened", path.string());
 			return false;
 		}
+
+		Initialize();
 
 		// Get size of file and allocate a buffer to hold the contents
 		std::string buffer;

@@ -26,7 +26,7 @@ namespace emu
 		 */
 
 	public:
-		[[nodiscard]] auto GetProgramCounter() { return _programCounter; }
+		[[nodiscard]] auto GetProgramCounter() const { return _programCounter; }
 		void SetProgramCounter(const TwoBytes value);
 		void AdvanceProgramCounter();
 		void RetreatProgramCounter();
@@ -78,6 +78,13 @@ namespace emu
 		void WaitUntilKeyIsPressed(const TwoBytes instruction, const IKeypad& keypad);
 
 		void DecrementTimers();
+
+		auto GetIndexRegister() const { return _indexRegister; }
+		auto GetStackPointer() const { return _stackPointer; }
+		const auto& GetStack() const { return _stack; }
+		const auto& GetRegisters() const { return _registers; }
+		auto GetDelayTimer() const { return _delayTimer; }
+		auto GetSoundTimer() const { return _soundTimer; }
 	private:
 		void ConditionalSkip(const bool condition);
 		void SubtractRegisters(const Byte regOut, const Byte reg1, const Byte reg2);

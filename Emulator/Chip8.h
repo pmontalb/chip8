@@ -30,6 +30,8 @@ namespace emu
 			Instruction GetLastExecutedInstruction() const { return _lastExecutedInstruction; }
 
 			const auto& GetDisplay() const { return _display; }
+			const auto& GetCpu() const { return _cpu; }
+			const auto& GetRam() const { return _ram; }
 			auto& GetKeypad() { return _keypad; }
 
 			[[nodiscard]] bool IsValid() const { return _lastError == Error::None; }
@@ -40,6 +42,7 @@ namespace emu
 			bool ExecuteInstruction(const TwoBytes instruction);
 
 		private:
+			void Initialize();
 			void PopulateInstructionSetFunctionPointers();
 
 		protected:

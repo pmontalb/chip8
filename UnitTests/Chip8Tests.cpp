@@ -67,8 +67,8 @@ struct TestDisplay final: public emu::IDisplay
 
 private:
 	std::vector<bool> _pixels {};
-	const size_t _width;
-	const size_t _height;
+	size_t _width;
+	size_t _height;
 };
 
 struct TestCpu: public emu::Cpu

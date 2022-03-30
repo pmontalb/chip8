@@ -19,7 +19,7 @@ namespace emu
 
 	private:
 		std::random_device _device{};
-		std::mt19937 _generator{};
+		std::mt19937 _generator;
 
 		std::uniform_int_distribution<Byte> _distribution { std::numeric_limits<Byte>::min(), std::numeric_limits<Byte>::max() };
 	};
