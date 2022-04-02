@@ -160,8 +160,8 @@ namespace emu
 	void Cpu::LoadRegistersFromRam(const TwoBytes instruction, IRam& ram)
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
-		LOG_DEBUG("copying the first ({}) elements from ram(start={}) into registers", Vx, _indexRegister);
-		ram.WriteTo(_indexRegister, _registers.data(), Vx);
+		LOG_DEBUG("copying the first ({}) elements from ram(start={}) into registers", Vx + 1, _indexRegister);
+		ram.WriteTo(_indexRegister, _registers.data(), Vx + 1);
 	}
 
 	void Cpu::SetDelayTimer(const TwoBytes instruction)
@@ -201,8 +201,8 @@ namespace emu
 	void Cpu::StoreRegistersInRam(const TwoBytes instruction, IRam& ram)
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
-		LOG_DEBUG("storing the first ({}) elements from registers into ram(start={})", Vx, _indexRegister);
-		ram.CopyFrom(_indexRegister, _registers.data(), Vx);
+		LOG_DEBUG("storing the first ({}) elements from registers into ram(start={})", Vx + 1, _indexRegister);
+		ram.CopyFrom(_indexRegister, _registers.data(), Vx + 1);
 	}
 
 	void Cpu::AddEqualByte(const TwoBytes instruction)

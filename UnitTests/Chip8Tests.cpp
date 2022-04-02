@@ -267,10 +267,27 @@ TEST_F(Chip8Tests, ExecuteInstruction0xFxyz)
 	ASSERT_EQ(chip8.GetLastExecutedInstruction(), emu::Instruction::_0xFx65);
 }
 
+template<typename EmuT>
+static void PrintDisplay(const EmuT& emulator)
+{
+	for (size_t row = 0; row < emulator.GetDisplay().GetHeight(); ++row)
+	{
+		for (size_t col = 0; col < emulator.GetDisplay().GetWidth(); ++col)
+		{
+			const size_t coord = col + row * emulator.GetDisplay().GetWidth();
+			if (emulator.GetDisplay().GetAt(coord))
+				std::cout << "█";
+			else
+				std::cout << " ";
+		}
+		std::cout << std::endl;
+	}
+}
+
 TEST_F(Chip8Tests, TestOpCode)
 {
-//	spdlog::set_level(spdlog::level::trace);
-//	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+	spdlog::set_level(spdlog::level::off);
+	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
 
 	struct Chip8: public emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>
 	{
@@ -283,5 +300,42 @@ TEST_F(Chip8Tests, TestOpCode)
 	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/test_opcode.ch8"));
 
 	for (size_t i = 0; i < 5000; ++i)
+	{
+//		LOG_CRITICAL("i={}", i);
+//		if (i >= 172 && i <= 184)
+//		{
+//			spdlog::set_level(spdlog::level::trace);
+//		}
+//		else
+//		{
+//			spdlog::set_level(spdlog::level::off);
+//		}
 		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
+	}
+
+	PrintDisplay(chip8);
+}
+
+TEST_F(Chip8Tests, TestRom)
+{
+	spdlog::set_level(spdlog::level::off);
+	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
+	struct Chip8: public emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>
+	{
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_cpu;
+	};
+	Chip8 chip8;
+
+	auto* dataPath = std::getenv("DATA_PATH");
+	ASSERT_NE(dataPath, nullptr);
+	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/test-rom.ch8"));
+
+	for (size_t i = 0; i < 50; ++i)
+	{
+//		LOG_CRITICAL("i={}", i);
+		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
+	}
+
+	PrintDisplay(chip8);
 }
