@@ -176,3 +176,18 @@ TEST_F(RamTests, Load)
 		ASSERT_EQ(ram.GetAt(i), 0);
 }
 
+TEST_F(RamTests, Serialize)
+{
+	emu::Ram ram;
+	for (size_t i = ram.GetInstructionStartAddress(); i < ram.GetSize(); ++i)
+		ram.SetAt(i, static_cast<emu::Byte>(i * i + 1));
+
+	std::vector<emu::Byte> bytes;
+	ram.Serialize(bytes);
+
+	emu::Ram ram2;
+	ram2.Deserialize(bytes);
+	for (size_t i = 0; i < ram.GetSize(); ++i)
+		ASSERT_EQ(ram.GetAt(i), ram2.GetAt(i));
+}
+

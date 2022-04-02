@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Interfaces/IRam.h"
+#include "ISerializable.h"
 
 #include <array>
 #include <cstring>
@@ -48,7 +49,7 @@ namespace emu
 		static_assert(fontsOffset + fontsTotalSize == endFonts);
 	}	 // namespace
 
-	class Ram final: public IRam
+	class Ram final: public IRam, public ISerializable
 	{
 		static constexpr std::size_t size = 4096;
 		static constexpr std::size_t instructionStart = 0x200;
@@ -71,6 +72,9 @@ namespace emu
 		void WriteTo(const size_t memoryStart, Byte* dest, const size_t nElements) const override;
 
 		[[nodiscard]] Byte GetFontAt(const size_t index) const override;
+
+		void Serialize(std::vector<Byte>& byteArray) const override;
+		void Deserialize(const std::vector<Byte>& byteArray) override;
 
 	private:
 		// 0x000-0x1FF not in use

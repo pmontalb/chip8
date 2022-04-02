@@ -3,13 +3,14 @@
 
 #include "Interfaces/IDisplay.h"
 #include "Utilities.h"
+#include "ISerializable.h"
 
 #include <bitset>
 #include <vector>
 
 namespace emu
 {
-	class Display final: public IDisplay
+	class Display final: public IDisplay, public ISerializable
 	{
 		static constexpr std::size_t width = 64;
 		static constexpr std::size_t height = 32;
@@ -26,6 +27,9 @@ namespace emu
 
 		void Reset() override;
 		[[nodiscard]] bool HasChanged() const override;
+
+		void Serialize(std::vector<Byte>& byteArray) const override;
+		void Deserialize(const std::vector<Byte>& byteArray) override;
 
 	private:
 		std::bitset<size> _data = std::bitset<size>(0);

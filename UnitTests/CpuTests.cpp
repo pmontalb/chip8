@@ -373,11 +373,11 @@ TEST_F(CpuTests, LoadRegistersFromRam)
 	emu::TwoBytes instruction = 0xD9AE;
 	cpu.LoadRegistersFromRam(instruction, ram);
 
-	for (size_t i = 0; i <= 0x9; ++i)
+	for (size_t i = 0; i <= 0x9 + 1; ++i)
 	{
 		ASSERT_EQ(cpu._registers[i], ram.data[cpu._indexRegister + i]);
 	}
-	for (size_t i = 0x9 + 1; i < cpu._registers.size(); ++i)
+	for (size_t i = 0x9 + 2; i < cpu._registers.size(); ++i)
 		ASSERT_EQ(cpu._registers[i], 0);
 }
 
@@ -442,9 +442,9 @@ TEST_F(CpuTests, StoreRegistersInRam)
 
 	cpu.StoreRegistersInRam(instruction, ram);
 
-	for (size_t i = 0; i <= 0xC; ++i)
+	for (size_t i = 0; i <= 0xC + 1; ++i)
 		ASSERT_EQ(cpu._registers[i], ram.data[cpu._indexRegister + i]);
-	for (size_t i = 0xC + 1; i < ram.data.size() - cpu._indexRegister; ++i)
+	for (size_t i = 0xC + 2; i < ram.data.size() - cpu._indexRegister; ++i)
 		ASSERT_EQ(ram.data[cpu._indexRegister + i], 42);
 }
 
@@ -795,4 +795,32 @@ TEST_F(CpuTests, DecrementTimers)
 	cpu.DecrementTimers();
 	ASSERT_EQ(cpu._soundTimer, 0);
 	ASSERT_EQ(cpu._delayTimer, 0);
+}
+
+TEST_F(CpuTests, Serialize)
+{
+	TestCpu cpu;
+	cpu._programCounter = 123;
+	cpu._indexRegister = 456;
+	cpu._stackPointer = 11;
+	cpu._stack.fill(147);
+	cpu._registers.fill(159);
+	cpu._soundTimer = 42;
+	cpu._delayTimer = 24;
+
+	std::vector<emu::Byte> bytes;
+	cpu.Serialize(bytes);
+
+	TestCpu cpu2;
+	cpu2.Deserialize(bytes);
+
+	ASSERT_EQ(cpu._programCounter, cpu2._programCounter);
+	ASSERT_EQ(cpu._indexRegister, cpu2._indexRegister);
+	ASSERT_EQ(cpu._stackPointer, cpu2._stackPointer);
+	for (size_t i = 0; i < cpu._stack.size(); ++i)
+		ASSERT_EQ(cpu._stack[i], cpu2._stack[i]);
+	for (size_t i = 0; i < cpu._registers.size(); ++i)
+		ASSERT_EQ(cpu._registers[i], cpu2._registers[i]);
+	ASSERT_EQ(cpu._delayTimer, cpu2._delayTimer);
+	ASSERT_EQ(cpu._soundTimer, cpu2._soundTimer);
 }

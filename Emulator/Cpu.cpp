@@ -439,4 +439,56 @@ namespace emu
 
 		LOG_DEBUG("decremented delayTimer({}) soundTimer({})", _delayTimer, _soundTimer);
 	}
+
+	void Cpu::Serialize(std::vector<Byte>& byteArray) const
+	{
+		byteArray.reserve(byteArray.size() + 7 + 2 * _stack.size() + _registers.size());
+
+		byteArray.push_back(utils::LowestByte(_programCounter));
+		byteArray.push_back(utils::HighestByte(_programCounter));
+
+		byteArray.push_back(utils::LowestByte(_indexRegister));
+		byteArray.push_back(utils::HighestByte(_indexRegister));
+
+		byteArray.push_back(_stackPointer);
+
+		byteArray.push_back(_delayTimer);
+		byteArray.push_back(_soundTimer);
+
+		for (size_t i = 0; i < _stack.size(); ++i)
+		{
+			byteArray.push_back(utils::LowestByte(_stack[i]));
+			byteArray.push_back(utils::HighestByte(_stack[i]));
+		}
+
+		for (size_t i = 0; i < _registers.size(); ++i)
+			byteArray.push_back(_registers[i]);
+	}
+
+	void Cpu::Deserialize(const std::vector<Byte>& byteArray)
+	{
+		const auto getTwoBytes = [&](size_t idx)
+		{
+			return static_cast<TwoBytes>((byteArray[idx + 1] << 8ul) | byteArray[idx]);
+		};
+
+		size_t idx = 0;
+		_programCounter = getTwoBytes(idx);
+		idx += 2;
+
+		_indexRegister = getTwoBytes(idx);
+		idx += 2;
+
+		_stackPointer = byteArray[idx++];
+		_delayTimer = byteArray[idx++];
+		_soundTimer = byteArray[idx++];
+		for (size_t i = 0; i < _stack.size(); ++i)
+		{
+			_stack[i] = getTwoBytes(idx);
+			idx += 2;
+		}
+
+		for (size_t i = 0; i < _registers.size(); ++i)
+			_registers[i] = byteArray[idx++];
+	}
 }	 // namespace emu

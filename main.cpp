@@ -290,7 +290,7 @@ private:
 //		ImGui::SameLine();
 		ImGui::Text("Current Instruction=0x%02X%02X", ram.GetAt(cpu.GetProgramCounter()), ram.GetAt(cpu.GetProgramCounter() + 1));
 		ImGui::SameLine();
-		ImGui::Text("Last Instruction=0x%04X", _emulator.GetLastExecutedInstruction());
+		ImGui::Text("Last Instruction=%s", emu::ToString(_emulator.GetLastExecutedInstruction()).data());
 		ImGui::Separator();
 
 		ImGui::BeginGroup();
@@ -325,14 +325,14 @@ private:
 				if (i >= ram.GetSize() / 2)
 					break;
 
-				if (i < ram.GetInstructionStartAddress())
+				if (2 * i < ram.GetInstructionStartAddress())
 					ImGui::TextColored(mahi::gui::Colors::Yellow, "0x%02X%02X", ram.GetAt(2 * i), ram.GetAt(2 * i + 1));
 				else
 				{
-					if (i == cpu.GetProgramCounter())
+					if (i == cpu.GetProgramCounter() / 2)
 						ImGui::TextColored(mahi::gui::Colors::Orange, "0x%02X%02X", ram.GetAt(2 * i),
 										   ram.GetAt(2 * i + 1));
-					else if (i == cpu.GetIndexRegister())
+					else if (i == cpu.GetIndexRegister() / 2)
 						ImGui::TextColored(mahi::gui::Colors::Green, "0x%02X%02X", ram.GetAt(2 * i),
 										   ram.GetAt(2 * i + 1));
 					else
@@ -357,13 +357,21 @@ private:
 			{
 				if (ImGui::MenuItem("Open"))
 				{
-					std::string out;
-					if (mahi::gui::open_dialog(out, { { "Chip8 Roms", ".ch8" } }) ==
+					if (mahi::gui::open_dialog(selectedRom, { { "Chip8 Roms", "*.ch8" } }) ==
 						mahi::gui::DialogResult::DialogOkay)
 					{
-						_emulator.LoadRom(out);
+						_emulator.LoadRom(selectedRom);
 						_running = true;
 					}
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Edit"))
+			{
+				if (ImGui::MenuItem("Restart"))
+				{
+					_emulator.LoadRom(selectedRom);
+					_running = true;
 				}
 				ImGui::EndMenu();
 			}
@@ -475,6 +483,7 @@ private:
 	float yPadding = 50.0f;
 	spdlog::level::level_enum logLevel = spdlog::level::warn;
 	bool stopOnError = true;
+	std::string selectedRom;
 
 	bool _running = false;
 };

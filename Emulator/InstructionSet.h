@@ -54,7 +54,7 @@ namespace emu
 	};
 
 	// clang-format off
-	static constexpr std::size_t nInstructions = 34;
+	static constexpr std::size_t nInstructions = 35;
 	static constexpr std::array<std::string_view, nInstructions> instructionSetIds = {{
 		"0x00E0",
 		"0x00EE",
@@ -95,6 +95,8 @@ namespace emu
 		"0xFx33",
 		"0xFx55",
 		"0xFx65",
+
+		"INVALID",
 	}};
 	// clang-format on
 	static constexpr inline std::string_view ToString(const Instruction instruction)

@@ -64,3 +64,18 @@ TEST_F(DisplayTests, Reset)
 	display.Reset();
 	ASSERT_FALSE(display.HasChanged());
 }
+TEST_F(DisplayTests, Serialize)
+{
+	emu::Display display;
+	for (size_t i = 24; i < 128; ++i)
+		display.FlipAt(i);
+
+	std::vector<emu::Byte> bytes;
+	display.Serialize(bytes);
+
+	emu::Display display2;
+	display2.Deserialize(bytes);
+
+	for (size_t i = 0; i < display.GetWidth() * display.GetHeight(); ++i)
+		ASSERT_EQ(display.GetAt(i), display2.GetAt(i));
+}

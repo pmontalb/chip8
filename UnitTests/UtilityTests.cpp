@@ -76,6 +76,13 @@ TEST_F(UtilityTests, LowestByte)
 	ASSERT_EQ(utils::LowestByte(value), 0x002F);
 }
 
+TEST_F(UtilityTests, HighestByte)
+{
+	constexpr emu::TwoBytes value = 0xFA2F;
+	static_assert(CompileTimeEqualityCheck<utils::HighestByte(value), 0x00FA>::value);
+	ASSERT_EQ(utils::HighestByte(value), 0x00FA);
+}
+
 TEST_F(UtilityTests, LastBit)
 {
 	constexpr emu::TwoBytes value1 = 0xFA2F;

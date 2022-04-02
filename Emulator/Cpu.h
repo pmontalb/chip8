@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Utilities.h"
+#include "ISerializable.h"
 #include <array>
 
 namespace emu
@@ -11,7 +12,7 @@ namespace emu
 	class IRam;
 	class IKeypad;
 
-	class Cpu
+	class Cpu: public ISerializable
 	{
 		static constexpr std::size_t stackSize = 16;
 		static constexpr std::size_t registerSize = 16;
@@ -85,6 +86,9 @@ namespace emu
 		const auto& GetRegisters() const { return _registers; }
 		auto GetDelayTimer() const { return _delayTimer; }
 		auto GetSoundTimer() const { return _soundTimer; }
+
+		void Serialize(std::vector<Byte>& byteArray) const final;
+		void Deserialize(const std::vector<Byte>& byteArray) final;
 	private:
 		void ConditionalSkip(const bool condition);
 		void SubtractRegisters(const Byte regOut, const Byte reg1, const Byte reg2);

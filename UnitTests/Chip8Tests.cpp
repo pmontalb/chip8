@@ -299,7 +299,7 @@ TEST_F(Chip8Tests, TestOpCode)
 	ASSERT_NE(dataPath, nullptr);
 	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/test_opcode.ch8"));
 
-	for (size_t i = 0; i < 5000; ++i)
+	for (size_t i = 0; i < 50; ++i)
 	{
 //		LOG_CRITICAL("i={}", i);
 //		if (i >= 172 && i <= 184)

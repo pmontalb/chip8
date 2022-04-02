@@ -67,6 +67,14 @@ namespace utils
 		constexpr emu::TwoBytes mask = 0x00FFu;
 		return static_cast<emu::Byte>(detail::Mask(instruction, mask));
 	}
+	static constexpr emu::Byte HighestByte(const emu::TwoBytes instruction)
+	{
+		constexpr emu::TwoBytes mask = 0xFF00u;
+		const auto maskedValue = detail::Mask(instruction, mask);
+
+		constexpr emu::Byte rightShift = 8u;
+		return static_cast<emu::Byte>(detail::ShiftDown(maskedValue, rightShift));
+	}
 	// least significant
 	static constexpr emu::Byte LastBit(const emu::TwoBytes instruction)
 	{

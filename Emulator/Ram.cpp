@@ -52,4 +52,14 @@ namespace emu
 		std::memcpy(dest, _data.begin() + memoryStart, nElements * sizeof(Byte));
 	}
 
+	void Ram::Serialize(std::vector<Byte>& byteArray) const
+	{
+		std::copy(_data.begin(), _data.end(), std::back_inserter(byteArray));
+	}
+
+	void Ram::Deserialize(const std::vector<Byte>& byteArray)
+	{
+		std::copy(byteArray.begin(), byteArray.end(), _data.begin());
+	}
+
 }	 // namespace emu
