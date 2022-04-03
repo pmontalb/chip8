@@ -39,15 +39,16 @@
 		__IGNORE_WARNING__("-Wctor-dtor-privacy")                                                                      \
 		__IGNORE_WARNING__("-Wuseless-cast")                                                                           \
 		__IGNORE_WARNING__("-Wdeprecated")                                                                             \
-		__IGNORE_WARNING__("-Wredundant-tags")                                                                            \
-		__IGNORE_WARNING__("-Wzero-as-null-pointer-constant")                                                             \
-		__IGNORE_WARNING__("-Wsign-promo")                                                                         \
+		__IGNORE_WARNING__("-Wredundant-tags")                                                                         \
+		__IGNORE_WARNING__("-Wzero-as-null-pointer-constant")                                                          \
+		__IGNORE_WARNING__("-Wsign-promo")                                                                             \
 		__IGNORE_WARNING__("-Wdouble-promotion")
 #endif
 
 __START_IGNORING_WARNINGS__
 __IGNORE_MAHI_GUI_WARNINGS__
 #include <Mahi/Gui.hpp>
+#include <Mahi/Util/Timing/Frequency.hpp>
 #include <Mahi/Gui/Native.hpp>
 #include <imgui_internal.h>
 __STOP_IGNORING_WARNINGS__
@@ -60,6 +61,14 @@ __STOP_IGNORING_WARNINGS__
 
 #include <mutex>
 #include <thread>
+
+enum class SaveStateOperation
+{
+	None,
+	FileNotFound,
+	Load,
+	Save,
+};
 
 static const std::unordered_map<spdlog::level::level_enum, mahi::gui::Color> logColors = {
 	{ spdlog::level::trace, mahi::gui::Greens::LimeGreen }, { spdlog::level::debug, mahi::gui::Greens::LightGreen },
@@ -216,6 +225,14 @@ namespace ImGui
 
 		ImGui::EndGroup();
 	}
+
+	static inline ImU32 Convert(const mahi::gui::Color& color)
+	{
+		__START_IGNORING_WARNINGS__
+		__IGNORE_WARNING__("-Wold-style-cast")
+		return IM_COL32(color.r * 255, color.g * 255, color.b * 255, color.a * 255);
+		__STOP_IGNORING_WARNINGS__
+	}
 }	 // namespace ImGui
 
 __START_IGNORING_WARNINGS__
@@ -238,7 +255,8 @@ private:
 
 	void setUpDebuggingWindow()
 	{
-		ImGui::SetNextWindowSize(ImVec2(700, 400), ImGuiCond_Once);
+//		ImGui::SetNextWindowPos({ 60, 60 });
+		ImGui::SetNextWindowSize({ 400, 400 }, ImGuiCond_Once);
 		ImGui::Begin("Debug", &open);
 		if (ImGui::BeginCombo("Debug Level", to_string_view(logLevel).data()))
 		{
@@ -279,7 +297,8 @@ private:
 
 	void setUpDisassemblerView()
 	{
-		ImGui::SetNextWindowSize(ImVec2(0, 400), ImGuiCond_Once);
+//		ImGui::SetNextWindowPos({ 540, 50 });
+		ImGui::SetNextWindowSize(ImVec2(940, 390), ImGuiCond_Once);
 		ImGui::Begin("Cpu View", &open);
 
 		const auto& cpu = _emulator.GetCpu();
@@ -287,8 +306,9 @@ private:
 		ImGui::Text("PC=0x%X", cpu.GetProgramCounter());
 		ImGui::SameLine();
 		ImGui::Text("I=0x%X", cpu.GetIndexRegister());
-//		ImGui::SameLine();
-		ImGui::Text("Current Instruction=0x%02X%02X", ram.GetAt(cpu.GetProgramCounter()), ram.GetAt(cpu.GetProgramCounter() + 1));
+		//		ImGui::SameLine();
+		ImGui::Text("Current Instruction=0x%02X%02X", ram.GetAt(cpu.GetProgramCounter()),
+					ram.GetAt(cpu.GetProgramCounter() + 1));
 		ImGui::SameLine();
 		ImGui::Text("Last Instruction=%s", emu::ToString(_emulator.GetLastExecutedInstruction()).data());
 		ImGui::Separator();
@@ -357,13 +377,74 @@ private:
 			{
 				if (ImGui::MenuItem("Open"))
 				{
-					if (mahi::gui::open_dialog(selectedRom, { { "Chip8 Roms", "*.ch8" } }) ==
+					if (mahi::gui::open_dialog(selectedRom, { { "Chip8 Roms", "ch8" } }) ==
 						mahi::gui::DialogResult::DialogOkay)
 					{
 						_emulator.LoadRom(selectedRom);
 						_running = true;
 					}
 				}
+
+				if (ImGui::BeginMenu("Load State"))
+				{
+					for (size_t i = 0; i < 9; ++i)
+					{
+						if (ImGui::MenuItem(std::to_string(i).c_str()))
+						{
+							std::filesystem::path saveState = selectedRom + ".sav." + std::to_string(i);
+
+							showSaveStateOperation = true;
+							saveStateTimer = std::chrono::system_clock::now();
+							selectedSaveState = i;
+
+							if (!std::filesystem::exists(saveState))
+							{
+								saveStateOperation = SaveStateOperation::FileNotFound;
+							}
+							else
+							{
+								std::ifstream saveStateFile(saveState.string(), std::ios::binary | std::ios::ate);
+
+								const auto fileSize = static_cast<size_t>(saveStateFile.tellg());
+
+								std::vector<emu::Byte> byteArray(fileSize);
+								saveStateFile.seekg(saveStateFile.beg);
+								saveStateFile.read(reinterpret_cast<char*>(byteArray.data()),
+												   static_cast<long>(fileSize));
+								_emulator.Deserialize(byteArray);
+
+								saveStateOperation = SaveStateOperation::Load;
+							}
+						}
+					}
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Save State"))
+				{
+					for (size_t i = 0; i < 9; ++i)
+					{
+						if (ImGui::MenuItem(std::to_string(i).c_str()))
+						{
+							std::filesystem::path saveState = selectedRom + ".sav." + std::to_string(i);
+
+							std::vector<emu::Byte> byteArray;
+							_emulator.Serialize(byteArray);
+							std::ofstream saveStateFile(saveState.string(), std::ios::binary);
+							saveStateFile.write(reinterpret_cast<const char*>(&byteArray[0]),
+												static_cast<long>(byteArray.size() * sizeof(emu::Byte)));
+
+							showSaveStateOperation = true;
+							saveStateTimer = std::chrono::system_clock::now();
+							selectedSaveState = i;
+							saveStateOperation = SaveStateOperation::Save;
+						}
+					}
+
+					ImGui::EndMenu();
+				}
+
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Edit"))
@@ -373,9 +454,56 @@ private:
 					_emulator.LoadRom(selectedRom);
 					_running = true;
 				}
+				ImGui::MenuItem("Cap FPS", "", &_capFps);
+
+				const auto changed = ImGui::SliderFloat("FPS Limit", &_fps, 0.0f, 400.0f, "%.1f Hz");
+				if (std::abs(_fps - 400.0f) < 1e-7f)
+					_capFps = false;
+				if (changed)
+					_capFps = true;
+
+				if (_capFps)
+					set_frame_limit(mahi::util::hertz(static_cast<long long int>(_fps)));
+				else
+					set_frame_limit(mahi::util::hertz(0));
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
+		}
+
+		if (showSaveStateOperation)
+		{
+			auto color = mahi::gui::Colors::Red;
+			auto timeDiff = std::chrono::system_clock::now() - saveStateTimer;
+			constexpr auto maxDurationSeconds = 3.0f;
+			color.a = std::max(0.0f, (1.0f - (std::chrono::duration<float>(timeDiff).count() / maxDurationSeconds)));
+			if (std::abs(color.a) < 1e-7f)
+			{
+				showSaveStateOperation = false;
+			}
+			else
+			{
+				auto* drawList = ImGui::GetWindowDrawList();
+				auto p = ImGui::GetCursorScreenPos();
+				p.x += ImGui::GetWindowWidth() / 3.0f;
+
+				std::string str;
+				switch (saveStateOperation)
+				{
+					case SaveStateOperation::FileNotFound:
+						str = "Save state " + std::to_string(selectedSaveState) + " not found";
+						break;
+					case SaveStateOperation::Load:
+						str = "Loaded state " + std::to_string(selectedSaveState);
+						break;
+					case SaveStateOperation::Save:
+						str = "Saved state " + std::to_string(selectedSaveState);
+						break;
+					default:
+						break;
+				}
+				drawList->AddText(p, ImGui::Convert(color), str.c_str());
+			}
 		}
 	}
 
@@ -483,9 +611,16 @@ private:
 	float yPadding = 50.0f;
 	spdlog::level::level_enum logLevel = spdlog::level::warn;
 	bool stopOnError = true;
-	std::string selectedRom;
+	std::string selectedRom {};
+
+	bool showSaveStateOperation = false;
+	size_t selectedSaveState = 0;
+	std::chrono::system_clock::time_point saveStateTimer {};
+	SaveStateOperation saveStateOperation = SaveStateOperation::None;
 
 	bool _running = false;
+	bool _capFps = true;
+	float _fps = 60.0;
 };
 
 int main(int /*argc*/, char** /*argv*/)
@@ -505,6 +640,7 @@ int main(int /*argc*/, char** /*argv*/)
 	config.decorated = true;
 	//		config.background = mahi::gui::Colors::Auto;
 	ChipEightEmulator app(config, sink);
+//	app.set_frame_limit(mahi::util::hertz(60));
 	app.run();
 	return 0;
 }

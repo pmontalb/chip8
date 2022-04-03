@@ -1,6 +1,6 @@
 
-#include <gtest/gtest.h>
 #include "Emulator/Chip8.h"
+#include <gtest/gtest.h>
 
 #include "Emulator/Logging.h"
 
@@ -12,14 +12,11 @@ struct TestKeyPad final: public emu::IKeypad, public emu::ISerializable
 	[[nodiscard]] emu::Byte GetSize() const override { return 0; }
 	void Press(const emu::Keys::Enum code, const bool toggle_) override { toggle[code] = toggle_; }
 
-	void Serialize(std::vector<emu::Byte>&) const override
-	{
-		assert(false);
-	}
+	void Serialize(std::vector<emu::Byte>&) const override { assert(false); }
 	utils::Span<emu::Byte> Deserialize(const utils::Span<emu::Byte>&) override
 	{
 		assert(false);
-		return utils::Span<emu::Byte>{};
+		return utils::Span<emu::Byte> {};
 	}
 };
 
@@ -49,14 +46,11 @@ struct TestRam final: public emu::IRam, public emu::ISerializable
 			dest[i] = data[i + idx];
 	}
 
-	void Serialize(std::vector<emu::Byte>&) const override
-	{
-		assert(false);
-	}
+	void Serialize(std::vector<emu::Byte>&) const override { assert(false); }
 	utils::Span<emu::Byte> Deserialize(const utils::Span<emu::Byte>&) override
 	{
 		assert(false);
-		return utils::Span<emu::Byte>{};
+		return utils::Span<emu::Byte> {};
 	}
 };
 
@@ -85,14 +79,11 @@ struct TestDisplay final: public emu::IDisplay, public emu::ISerializable
 
 	auto& GetPixels() { return _pixels; }
 
-	void Serialize(std::vector<emu::Byte>&) const override
-	{
-		assert(false);
-	}
+	void Serialize(std::vector<emu::Byte>&) const override { assert(false); }
 	utils::Span<emu::Byte> Deserialize(const utils::Span<emu::Byte>&) override
 	{
 		assert(false);
-		return utils::Span<emu::Byte>{};
+		return utils::Span<emu::Byte> {};
 	}
 
 private:
@@ -118,10 +109,10 @@ struct TestChip8: public emu::detail::Chip8<TestCpu, TestRng, TestRam, TestDispl
 {
 	using Base = emu::detail::Chip8<TestCpu, TestRng, TestRam, TestDisplay, TestKeyPad>;
 	using Base::_cpu;
-	using Base::_rng;
-	using Base::_ram;
 	using Base::_display;
 	using Base::_keypad;
+	using Base::_ram;
+	using Base::_rng;
 };
 
 class Chip8Tests: public ::testing::Test
@@ -141,7 +132,8 @@ TEST_F(Chip8Tests, Initialization)
 {
 	TestChip8 chip8;
 	ASSERT_EQ(chip8._cpu.GetProgramCounter(), chip8._ram.GetInstructionStartAddress());
-	ASSERT_TRUE(std::all_of(chip8._display.GetPixels().begin(), chip8._display.GetPixels().end(), [](auto pixel) { return !pixel; }));
+	ASSERT_TRUE(std::all_of(chip8._display.GetPixels().begin(), chip8._display.GetPixels().end(),
+							[](auto pixel) { return !pixel; }));
 }
 
 TEST_F(Chip8Tests, ExecuteUniquePatternInstructionSets)
@@ -331,15 +323,15 @@ TEST_F(Chip8Tests, TestOpCode)
 
 	for (size_t i = 0; i < 50; ++i)
 	{
-//		LOG_CRITICAL("i={}", i);
-//		if (i >= 172 && i <= 184)
-//		{
-//			spdlog::set_level(spdlog::level::trace);
-//		}
-//		else
-//		{
-//			spdlog::set_level(spdlog::level::off);
-//		}
+		//		LOG_CRITICAL("i={}", i);
+		//		if (i >= 172 && i <= 184)
+		//		{
+		//			spdlog::set_level(spdlog::level::trace);
+		//		}
+		//		else
+		//		{
+		//			spdlog::set_level(spdlog::level::off);
+		//		}
 		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
 	}
 
@@ -363,11 +355,41 @@ TEST_F(Chip8Tests, TestRom)
 
 	for (size_t i = 0; i < 50; ++i)
 	{
-//		LOG_CRITICAL("i={}", i);
+		//		LOG_CRITICAL("i={}", i);
 		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
 	}
 
 	PrintDisplay(chip8);
+}
+
+template<typename EmuT>
+static void CheckAreEqual(const EmuT& lhs, const EmuT& rhs)
+{
+	// check cpu
+	ASSERT_EQ(lhs._cpu._programCounter, rhs._cpu._programCounter);
+	ASSERT_EQ(lhs._cpu._indexRegister, rhs._cpu._indexRegister);
+	ASSERT_EQ(lhs._cpu._stackPointer, rhs._cpu._stackPointer);
+	for (size_t i = 0; i < lhs._cpu._stack.size(); ++i)
+		ASSERT_EQ(lhs._cpu._stack[i], rhs._cpu._stack[i]);
+	for (size_t i = 0; i < lhs._cpu._registers.size(); ++i)
+		ASSERT_EQ(lhs._cpu._registers[i], rhs._cpu._registers[i]);
+	ASSERT_EQ(lhs._cpu._delayTimer, rhs._cpu._delayTimer);
+	ASSERT_EQ(lhs._cpu._soundTimer, rhs._cpu._soundTimer);
+	
+	// check ram
+	for (size_t i = 0; i < lhs._ram.GetSize(); ++i)
+		ASSERT_EQ(lhs._ram.GetAt(i), rhs._ram.GetAt(i));
+
+	// check display
+	for (size_t i = 0; i < lhs._display.GetWidth() * lhs._display.GetHeight(); ++i)
+		ASSERT_EQ(lhs._display.GetAt(i), rhs._display.GetAt(i));
+
+	// check keypad
+	for (size_t key = emu::Keys::START; key < emu::Keys::END; ++key)
+	{
+		auto keyCode = static_cast<emu::Keys::Enum>(key);
+		ASSERT_EQ(lhs._keypad.IsPressed(keyCode), rhs._keypad.IsPressed(keyCode));
+	}
 }
 
 TEST_F(Chip8Tests, Serialize)
@@ -397,29 +419,65 @@ TEST_F(Chip8Tests, Serialize)
 	Chip8 deserializedChip8;
 	deserializedChip8.Deserialize(byteArray);
 
-	// check cpu
-	ASSERT_EQ(deserializedChip8._cpu._programCounter, chip8._cpu._programCounter);
-	ASSERT_EQ(deserializedChip8._cpu._indexRegister, chip8._cpu._indexRegister);
-	ASSERT_EQ(deserializedChip8._cpu._stackPointer, chip8._cpu._stackPointer);
-	for (size_t i = 0; i < deserializedChip8._cpu._stack.size(); ++i)
-		ASSERT_EQ(deserializedChip8._cpu._stack[i], chip8._cpu._stack[i]);
-	for (size_t i = 0; i < deserializedChip8._cpu._registers.size(); ++i)
-		ASSERT_EQ(deserializedChip8._cpu._registers[i], chip8._cpu._registers[i]);
-	ASSERT_EQ(deserializedChip8._cpu._delayTimer, chip8._cpu._delayTimer);
-	ASSERT_EQ(deserializedChip8._cpu._soundTimer, chip8._cpu._soundTimer);
+	CheckAreEqual(deserializedChip8, chip8);
+}
 
-	// check ram
-	for (size_t i = 0; i < deserializedChip8._ram.GetSize(); ++i)
-		ASSERT_EQ(deserializedChip8._ram.GetAt(i), chip8._ram.GetAt(i));
-
-	// check display
-	for (size_t i = 0; i < deserializedChip8._display.GetWidth() * deserializedChip8._display.GetHeight(); ++i)
-		ASSERT_EQ(deserializedChip8._display.GetAt(i), chip8._display.GetAt(i));
-
-	// check keypad
-	for (size_t key = emu::Keys::START; key < emu::Keys::END; ++key)
+TEST_F(Chip8Tests, SerializeToFile)
+{
+	struct TemporaryFile
 	{
-		auto keyCode = static_cast<emu::Keys::Enum>(key);
-		ASSERT_EQ(deserializedChip8._keypad.IsPressed(keyCode), chip8._keypad.IsPressed(keyCode));
+		std::filesystem::path path;
+		~TemporaryFile() { std::filesystem::remove(path); }
+	};
+
+	spdlog::set_level(spdlog::level::off);
+	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
+	struct Chip8: public emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>
+	{
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_cpu;
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_ram;
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_display;
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_keypad;
+	};
+	Chip8 chip8;
+
+	auto* dataPath = std::getenv("DATA_PATH");
+	ASSERT_NE(dataPath, nullptr);
+	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/test_opcode.ch8"));
+
+	for (size_t i = 0; i < 50; ++i)
+		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
+
+	std::vector<emu::Byte> writeBytes;
+	chip8.Serialize(writeBytes);
+
+	TemporaryFile f { "tmp.sav" };
+
+	{
+		std::ofstream writeBinaryFile(f.path.string(), std::ios::binary);
+		writeBinaryFile.write(reinterpret_cast<const char*>(&writeBytes[0]),
+							  static_cast<long>(writeBytes.size() * sizeof(emu::Byte)));
 	}
+
+	std::ifstream readBinaryFile(f.path.string(), std::ios::binary | std::ios::ate);
+
+	const auto fileSize = static_cast<size_t>(readBinaryFile.tellg());
+	ASSERT_EQ(fileSize, writeBytes.size());
+
+	std::vector<emu::Byte> readBytes(fileSize);
+	readBinaryFile.seekg(readBinaryFile.beg);
+	readBinaryFile.read(reinterpret_cast<char*>(readBytes.data()), static_cast<long>(fileSize));
+
+	ASSERT_EQ(writeBytes.size(), readBytes.size());
+	for (size_t i = 0; i < writeBytes.size(); ++i)
+		EXPECT_EQ(writeBytes[i], readBytes[i]) << i;
+
+	if (HasFailure())
+		return;
+
+	Chip8 deserializedChip8;
+	deserializedChip8.Deserialize(readBytes);
+
+	CheckAreEqual(deserializedChip8, chip8);
 }

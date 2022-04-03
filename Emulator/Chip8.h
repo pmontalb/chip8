@@ -12,6 +12,7 @@
 #include "InstructionSet.h"
 
 #include <filesystem>
+#include <functional>
 
 // https://austinmorlan.com/posts/chip8_emulator/
 namespace emu
