@@ -54,12 +54,14 @@ namespace emu
 
 	void Ram::Serialize(std::vector<Byte>& byteArray) const
 	{
+		byteArray.reserve(byteArray.size() + size);
 		std::copy(_data.begin(), _data.end(), std::back_inserter(byteArray));
 	}
 
-	void Ram::Deserialize(const std::vector<Byte>& byteArray)
+	utils::Span<Byte> Ram::Deserialize(const utils::Span<Byte>& byteArray)
 	{
-		std::copy(byteArray.begin(), byteArray.end(), _data.begin());
+		std::copy(byteArray.begin(), byteArray.begin() + size, _data.begin());
+		return utils::Span<Byte>{ byteArray.begin() + size, byteArray.end() };
 	}
 
 }	 // namespace emu

@@ -88,7 +88,7 @@ namespace emu
 		auto GetSoundTimer() const { return _soundTimer; }
 
 		void Serialize(std::vector<Byte>& byteArray) const final;
-		void Deserialize(const std::vector<Byte>& byteArray) final;
+		utils::Span<Byte> Deserialize(const utils::Span<Byte>& byteArray) final;
 	private:
 		void ConditionalSkip(const bool condition);
 		void SubtractRegisters(const Byte regOut, const Byte reg1, const Byte reg2);

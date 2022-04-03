@@ -4,16 +4,26 @@
 
 #include "Emulator/Logging.h"
 
-struct TestKeyPad final: public emu::IKeypad
+struct TestKeyPad final: public emu::IKeypad, public emu::ISerializable
 {
 	std::bitset<emu::Keys::END> toggle {};
 
 	[[nodiscard]] bool IsPressed(const emu::Keys::Enum code) const override { return toggle[code]; }
 	[[nodiscard]] emu::Byte GetSize() const override { return 0; }
 	void Press(const emu::Keys::Enum code, const bool toggle_) override { toggle[code] = toggle_; }
+
+	void Serialize(std::vector<emu::Byte>&) const override
+	{
+		assert(false);
+	}
+	utils::Span<emu::Byte> Deserialize(const utils::Span<emu::Byte>&) override
+	{
+		assert(false);
+		return utils::Span<emu::Byte>{};
+	}
 };
 
-struct TestRam final: public emu::IRam
+struct TestRam final: public emu::IRam, public emu::ISerializable
 {
 	std::vector<emu::Byte> data {};
 	std::vector<emu::Byte> fonts {};
@@ -38,6 +48,16 @@ struct TestRam final: public emu::IRam
 		for (size_t i = 0; i <= nElems; ++i)
 			dest[i] = data[i + idx];
 	}
+
+	void Serialize(std::vector<emu::Byte>&) const override
+	{
+		assert(false);
+	}
+	utils::Span<emu::Byte> Deserialize(const utils::Span<emu::Byte>&) override
+	{
+		assert(false);
+		return utils::Span<emu::Byte>{};
+	}
 };
 
 struct TestRng final: public emu::IRng
@@ -46,7 +66,7 @@ struct TestRng final: public emu::IRng
 	[[nodiscard]] emu::Byte Next() override { return totallyRandomNumber; }
 };
 
-struct TestDisplay final: public emu::IDisplay
+struct TestDisplay final: public emu::IDisplay, public emu::ISerializable
 {
 	using Width = std::size_t;
 	using Height = std::size_t;
@@ -64,6 +84,16 @@ struct TestDisplay final: public emu::IDisplay
 	void FlipAt(const std::size_t coord) override { _pixels.at(coord).flip(); }
 
 	auto& GetPixels() { return _pixels; }
+
+	void Serialize(std::vector<emu::Byte>&) const override
+	{
+		assert(false);
+	}
+	utils::Span<emu::Byte> Deserialize(const utils::Span<emu::Byte>&) override
+	{
+		assert(false);
+		return utils::Span<emu::Byte>{};
+	}
 
 private:
 	std::vector<bool> _pixels {};
@@ -338,4 +368,58 @@ TEST_F(Chip8Tests, TestRom)
 	}
 
 	PrintDisplay(chip8);
+}
+
+TEST_F(Chip8Tests, Serialize)
+{
+	spdlog::set_level(spdlog::level::off);
+	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
+	struct Chip8: public emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>
+	{
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_cpu;
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_ram;
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_display;
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_keypad;
+	};
+	Chip8 chip8;
+
+	auto* dataPath = std::getenv("DATA_PATH");
+	ASSERT_NE(dataPath, nullptr);
+	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/test_opcode.ch8"));
+
+	for (size_t i = 0; i < 50; ++i)
+		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
+
+	std::vector<emu::Byte> byteArray;
+	chip8.Serialize(byteArray);
+
+	Chip8 deserializedChip8;
+	deserializedChip8.Deserialize(byteArray);
+
+	// check cpu
+	ASSERT_EQ(deserializedChip8._cpu._programCounter, chip8._cpu._programCounter);
+	ASSERT_EQ(deserializedChip8._cpu._indexRegister, chip8._cpu._indexRegister);
+	ASSERT_EQ(deserializedChip8._cpu._stackPointer, chip8._cpu._stackPointer);
+	for (size_t i = 0; i < deserializedChip8._cpu._stack.size(); ++i)
+		ASSERT_EQ(deserializedChip8._cpu._stack[i], chip8._cpu._stack[i]);
+	for (size_t i = 0; i < deserializedChip8._cpu._registers.size(); ++i)
+		ASSERT_EQ(deserializedChip8._cpu._registers[i], chip8._cpu._registers[i]);
+	ASSERT_EQ(deserializedChip8._cpu._delayTimer, chip8._cpu._delayTimer);
+	ASSERT_EQ(deserializedChip8._cpu._soundTimer, chip8._cpu._soundTimer);
+
+	// check ram
+	for (size_t i = 0; i < deserializedChip8._ram.GetSize(); ++i)
+		ASSERT_EQ(deserializedChip8._ram.GetAt(i), chip8._ram.GetAt(i));
+
+	// check display
+	for (size_t i = 0; i < deserializedChip8._display.GetWidth() * deserializedChip8._display.GetHeight(); ++i)
+		ASSERT_EQ(deserializedChip8._display.GetAt(i), chip8._display.GetAt(i));
+
+	// check keypad
+	for (size_t key = emu::Keys::START; key < emu::Keys::END; ++key)
+	{
+		auto keyCode = static_cast<emu::Keys::Enum>(key);
+		ASSERT_EQ(deserializedChip8._keypad.IsPressed(keyCode), chip8._keypad.IsPressed(keyCode));
+	}
 }

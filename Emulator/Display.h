@@ -29,7 +29,7 @@ namespace emu
 		[[nodiscard]] bool HasChanged() const override;
 
 		void Serialize(std::vector<Byte>& byteArray) const override;
-		void Deserialize(const std::vector<Byte>& byteArray) override;
+		utils::Span<Byte> Deserialize(const utils::Span<Byte>& byteArray) override;
 
 	private:
 		std::bitset<size> _data = std::bitset<size>(0);

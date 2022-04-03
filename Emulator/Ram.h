@@ -74,7 +74,7 @@ namespace emu
 		[[nodiscard]] Byte GetFontAt(const size_t index) const override;
 
 		void Serialize(std::vector<Byte>& byteArray) const override;
-		void Deserialize(const std::vector<Byte>& byteArray) override;
+		utils::Span<Byte> Deserialize(const utils::Span<Byte>& byteArray) override;
 
 	private:
 		// 0x000-0x1FF not in use

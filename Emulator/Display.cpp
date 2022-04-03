@@ -31,20 +31,24 @@ namespace emu
 		return _data[coord];
 	}
 
+	// https://stackoverflow.com/questions/5251403/binary-serialization-of-stdbitset
 	void Display::Serialize(std::vector<Byte>& byteArray) const
 	{
-		const auto flag = _data.to_ullong();
-		static_assert(sizeof(flag) == 8);
-		byteArray.reserve(byteArray.size() + sizeof(flag));
-		utils::ConstexprFor<0, sizeof(flag)>(
-			[&](const auto i) { byteArray[i] = static_cast<Byte>((flag & (0xFFul << 4 * i)) >> (4 * i)); });
+		constexpr size_t byteSize = size / 8;
+		std::vector<Byte> localByteArray(byteSize);
+		for (size_t i = 0; i < size; ++i)
+			localByteArray[i >> 3] |= static_cast<Byte>(_data[i] << (i & 7));
+
+		byteArray.reserve(byteArray.size() + byteSize);
+		std::copy(localByteArray.begin(), localByteArray.end(), std::back_inserter(byteArray));
 	}
 
-	void Display::Deserialize(const std::vector<Byte>& byteArray)
+	utils::Span<Byte> Display::Deserialize(const utils::Span<Byte>& byteArray)
 	{
-		unsigned long long flag;
-		utils::ConstexprFor<0, sizeof(flag)>([&](const auto i)
-											 { flag |= static_cast<unsigned long>(byteArray[i] << 4 * i); });
-		_data = std::bitset<size>(flag);
+		for (size_t i = 0; i < size; ++i)
+			_data[i] = static_cast<bool>((byteArray[i >> 3] >> (i & 7)) & 1);
+
+		constexpr size_t byteSize = size / 8;
+		return utils::Span<Byte>{ byteArray.begin() + byteSize, byteArray.end() };
 	}
 }	 // namespace emu

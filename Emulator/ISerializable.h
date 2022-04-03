@@ -2,6 +2,8 @@
 #pragma once
 
 #include "Types.h"
+#include "Span.h"
+
 #include <vector>
 
 namespace emu
@@ -11,6 +13,6 @@ namespace emu
 	public:
 		virtual ~ISerializable() = default;
 		virtual void Serialize(std::vector<Byte>& byteArray) const = 0;
-		virtual void Deserialize(const std::vector<Byte>& byteArray) = 0;
+		virtual utils::Span<Byte> Deserialize(const utils::Span<Byte>& byteView) = 0;
 	};
 }	 // namespace emu

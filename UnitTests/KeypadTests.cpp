@@ -61,3 +61,25 @@ TEST_F(KeypadTests, Release)
 		keypad.Press(keyCode, true);
 	}
 }
+
+TEST_F(KeypadTests, Serialize)
+{
+	emu::Keypad keypad;
+	for (size_t key = emu::Keys::START; key < emu::Keys::END; ++key)
+	{
+		auto keyCode = static_cast<emu::Keys::Enum>(key);
+		keypad.Press(keyCode, key % 3 == 0);
+	}
+
+	std::vector<emu::Byte> byteArray;
+	keypad.Serialize(byteArray);
+
+	emu::Keypad keypad2;
+	keypad2.Deserialize(byteArray);
+
+	for (size_t key = emu::Keys::START; key < emu::Keys::END; ++key)
+	{
+		auto keyCode = static_cast<emu::Keys::Enum>(key);
+		ASSERT_EQ(keypad.IsPressed(keyCode), keypad2.IsPressed(keyCode));
+	}
+}

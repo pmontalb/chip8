@@ -55,7 +55,7 @@ namespace utils
 			std::fill(_data.begin(), _data.end(), T {});
 		}
 
-		T& operator[](const std::size_t i)
+		[[nodiscard]] T& operator[](const std::size_t i)
 		{
 			assert(Size() > 0);
 			if (_tail > _head)
@@ -70,8 +70,8 @@ namespace utils
 		}
 		const T& operator[](const std::size_t i) const { return this->operator[](i); }
 
-		T& Front() { return this->operator[](0); }
-		T& Back() { return this->operator[](Size() - 1); }
+		[[nodiscard]] T& Front() { return this->operator[](0); }
+		[[nodiscard]] T& Back() { return this->operator[](Size() - 1); }
 
 	private:
 		std::array<T, N> _data {};

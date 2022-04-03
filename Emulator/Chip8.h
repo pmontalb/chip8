@@ -19,7 +19,7 @@ namespace emu
 	namespace detail
 	{
 		template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
-		class Chip8
+		class Chip8: public ISerializable
 		{
 		public:
 			Chip8();
@@ -36,6 +36,9 @@ namespace emu
 
 			[[nodiscard]] bool IsValid() const { return _lastError == Error::None; }
 			[[nodiscard]] auto GetLastError() const { return _lastError; }
+
+			void Serialize(std::vector<Byte>& byteArray) const override;
+			utils::Span<Byte> Deserialize(const utils::Span<Byte>& byteArray) override;
 
 		protected:
 			TwoBytes FetchInstruction();

@@ -465,7 +465,7 @@ namespace emu
 			byteArray.push_back(_registers[i]);
 	}
 
-	void Cpu::Deserialize(const std::vector<Byte>& byteArray)
+	utils::Span<Byte> Cpu::Deserialize(const utils::Span<Byte>& byteArray)
 	{
 		const auto getTwoBytes = [&](size_t idx)
 		{
@@ -490,5 +490,7 @@ namespace emu
 
 		for (size_t i = 0; i < _registers.size(); ++i)
 			_registers[i] = byteArray[idx++];
+
+		return utils::Span<Byte>{ byteArray.begin() + idx, byteArray.end() };
 	}
 }	 // namespace emu

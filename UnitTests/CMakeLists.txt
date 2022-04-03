@@ -19,6 +19,15 @@ create_test(
 
 create_test(
 	NAME
+		spanTests
+	SOURCES
+		SpanTests.cpp
+	DEPENDENCIES
+		testMain
+)
+
+create_test(
+	NAME
 		utilityTests
 	SOURCES
 		UtilityTests.cpp

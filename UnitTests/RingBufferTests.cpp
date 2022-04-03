@@ -60,8 +60,8 @@ TEST_F(RingBufferTests, PopFrontUntilEmpty)
 	__IGNORE_WARNING__("-Wused-but-marked-unused")
 #endif
 	ASSERT_DEATH({ rb.PopFront(); }, "");
-	ASSERT_DEATH({ rb.Front(); }, "");
-	ASSERT_DEATH({ rb.Back(); }, "");
+	ASSERT_DEATH({ auto x = rb.Front(); std::cout << x; }, "");
+	ASSERT_DEATH({ auto x = rb.Back(); std::cout << x; }, "");
 	__STOP_IGNORING_WARNINGS__
 }
 

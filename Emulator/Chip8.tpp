@@ -357,4 +357,26 @@ namespace emu::detail
 
 		return IsValid();
 	}
+
+	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
+	void Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::Serialize(std::vector<Byte>& byteArray) const
+	{
+		_cpu.Serialize(byteArray);
+		_ram.Serialize(byteArray);
+		_display.Serialize(byteArray);
+		_keypad.Serialize(byteArray);
+	}
+
+	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
+	utils::Span<Byte> Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::Deserialize(const utils::Span<Byte>& byteArray)
+	{
+		auto localByteArray = byteArray;
+		localByteArray = _cpu.Deserialize(localByteArray);
+		localByteArray = _ram.Deserialize(localByteArray);
+		localByteArray = _display.Deserialize(localByteArray);
+		localByteArray = _keypad.Deserialize(localByteArray);
+
+		return localByteArray;
+	}
+
 }	 // namespace emu::detail
