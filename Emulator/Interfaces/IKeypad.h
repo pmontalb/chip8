@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Emulator/Types.h"
+#include <string_view>
 
 namespace emu
 {
@@ -41,46 +42,54 @@ namespace emu
 			END,
 		};
 	}	 // namespace Keys
-	template<typename OStream>
-	OStream &operator<<(OStream &os, const Keys::Enum key)
+
+	static inline std::string_view ToString(Keys::Enum key)
 	{
 		switch (key)
 		{
 			case Keys::One:
-				return os << "1";
+				return "1";
 			case Keys::Two:
-				return os << "2";
+				return "2";
 			case Keys::Three:
-				return os << "3";
+				return "3";
 			case Keys::C:
-				return os << "C";
+				return "C";
 			case Keys::Four:
-				return os << "4";
+				return "4";
 			case Keys::Five:
-				return os << "5";
+				return "5";
 			case Keys::Six:
-				return os << "6";
+				return "6";
 			case Keys::D:
-				return os << "D";
+				return "D";
 			case Keys::Seven:
-				return os << "7";
+				return "7";
 			case Keys::Eight:
-				return os << "8";
+				return "8";
 			case Keys::Nine:
-				return os << "9";
+				return "9";
 			case Keys::E:
-				return os << "E";
+				return "E";
 			case Keys::A:
-				return os << "A";
+				return "A";
 			case Keys::Zero:
-				return os << "0";
+				return "0";
 			case Keys::B:
-				return os << "B";
+				return "B";
 			case Keys::F:
-				return os << "F";
+				return "F";
 			case Keys::END:
-				return os << "???";
+				return "???";
+			default:
+				return "???";
 		}
+	}
+
+	template<typename OStream>
+	OStream &operator<<(OStream &os, const Keys::Enum key)
+	{
+		return os << ToString(key);
 	}
 
 	class IKeypad

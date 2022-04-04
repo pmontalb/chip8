@@ -137,7 +137,7 @@ namespace detail
 }	 // namespace detail
 static inline auto GetKeysPressed()
 {
-	return detail::GetKeyPressedOrReleasedWorker([](int x) { return ImGui::IsKeyPressed(x); }, true);
+	return detail::GetKeyPressedOrReleasedWorker([](int x) { return ImGui::IsKeyPressed(x) || ImGui::GetIO().KeysDownDuration[x] > 0.0f; }, true);
 }
 static inline auto GetKeysReleased()
 {
@@ -298,7 +298,7 @@ private:
 	void setUpDisassemblerView()
 	{
 //		ImGui::SetNextWindowPos({ 540, 50 });
-		ImGui::SetNextWindowSize(ImVec2(940, 390), ImGuiCond_Once);
+		ImGui::SetNextWindowSize(ImVec2(940, 830), ImGuiCond_Once);
 		ImGui::Begin("Cpu View", &open);
 
 		const auto& cpu = _emulator.GetCpu();
@@ -336,30 +336,55 @@ private:
 
 		ImGui::SameLine();
 
+		ImGui::BeginGroupPanel("Keypad", ImVec2(0.0f, 0.0f));
+
+//		const auto pressedKeys = GetKeysPressed();
+//		const auto releasedKeys = GetKeysReleased();
+		for (size_t k = emu::Keys::START; k < emu::Keys::END; ++k)
+		{
+			ImGui::Text("Key[%s]", emu::ToString(static_cast<emu::Keys::Enum>(k)).data());
+//			ImGui::SameLine();
+//			bool p = pressedKeys[k];
+//			ImGui::Checkbox("", &p);
+//
+			ImGui::SameLine();
+
+			bool isKeyPressed = _emulator.GetKeypad().IsPressed(static_cast<emu::Keys::Enum>(k));
+			ImGui::Checkbox("", &isKeyPressed);
+//			if (pressedKeys[k])
+//				_emulator.GetKeypad().Press(static_cast<emu::Keys::Enum>(k), true);
+//			else if (releasedKeys[k])
+//				_emulator.GetKeypad().Press(static_cast<emu::Keys::Enum>(k), false);
+		}
+
+		ImGui::EndGroupPanel();
+
 		ImGui::BeginGroupPanel("RAM", ImVec2(0.0f, 0.0f));
 		constexpr size_t width = 16;
-		for (size_t i = 0; i < ram.GetSize() / 2; ++i)
+		for (size_t i = 0; i < ram.GetSize();)
 		{
+			ImGui::Text("0x%03zX: ", i);
+			ImGui::SameLine();
 			for (size_t j = 0; j < width; ++j)
 			{
-				if (i >= ram.GetSize() / 2)
+				if (i >= ram.GetSize())
 					break;
 
-				if (2 * i < ram.GetInstructionStartAddress())
-					ImGui::TextColored(mahi::gui::Colors::Yellow, "0x%02X%02X", ram.GetAt(2 * i), ram.GetAt(2 * i + 1));
+				if (i < ram.GetInstructionStartAddress())
+					ImGui::TextColored(mahi::gui::Colors::Yellow, "%02X %02X", ram.GetAt(i), ram.GetAt(i + 1));
 				else
 				{
-					if (i == cpu.GetProgramCounter() / 2)
-						ImGui::TextColored(mahi::gui::Colors::Orange, "0x%02X%02X", ram.GetAt(2 * i),
-										   ram.GetAt(2 * i + 1));
-					else if (i == cpu.GetIndexRegister() / 2)
-						ImGui::TextColored(mahi::gui::Colors::Green, "0x%02X%02X", ram.GetAt(2 * i),
-										   ram.GetAt(2 * i + 1));
+					if (i == cpu.GetProgramCounter())
+						ImGui::TextColored(mahi::gui::Colors::Orange, "%02X %02X", ram.GetAt(i),
+										   ram.GetAt(i + 1));
+					else if (i == cpu.GetIndexRegister())
+						ImGui::TextColored(mahi::gui::Colors::Green, "%02X %02X", ram.GetAt(i),
+										   ram.GetAt(i + 1));
 					else
-						ImGui::Text("0x%02X%02X", ram.GetAt(2 * i), ram.GetAt(2 * i + 1));
+						ImGui::Text("%02X %02X", ram.GetAt(i), ram.GetAt(i + 1));
 				}
 				ImGui::SameLine();
-				++i;
+				i += 2;
 			}
 			ImGui::NewLine();
 		}
@@ -557,8 +582,8 @@ private:
 		}
 		else if (_running || stepping)
 		{
-			auto pressedKeys = GetKeysPressed();
-			auto releasedKeys = GetKeysReleased();
+			const auto pressedKeys = GetKeysPressed();
+			const auto releasedKeys = GetKeysReleased();
 			for (size_t k = emu::Keys::START; k < emu::Keys::END; ++k)
 			{
 				if (pressedKeys[k])
