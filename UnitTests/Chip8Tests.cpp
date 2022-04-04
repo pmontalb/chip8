@@ -33,7 +33,7 @@ struct TestRam final: public emu::IRam, public emu::ISerializable
 	[[nodiscard]] emu::Byte GetAt(const std::size_t index) const override { return data.at(index); }
 	void SetAt(const std::size_t index, const emu::Byte value) override { data[index] = value; }
 
-	[[nodiscard]] emu::Byte GetFontAt(const std::size_t index) const override { return fonts[index]; }
+	[[nodiscard]] emu::Byte GetFontAddressAt(const std::size_t index) const override { return fonts[index]; }
 
 	void CopyFrom(const std::size_t idx, const emu::Byte* source, const std::size_t nElems) override
 	{
@@ -321,7 +321,7 @@ TEST_F(Chip8Tests, TestOpCode)
 	ASSERT_NE(dataPath, nullptr);
 	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/test_opcode.ch8"));
 
-	for (size_t i = 0; i < 50; ++i)
+	for (size_t i = 0; i < 500; ++i)
 	{
 		//		LOG_CRITICAL("i={}", i);
 		//		if (i >= 172 && i <= 184)
@@ -338,7 +338,7 @@ TEST_F(Chip8Tests, TestOpCode)
 	PrintDisplay(chip8);
 }
 
-TEST_F(Chip8Tests, TestRom)
+TEST_F(Chip8Tests, TestRom1)
 {
 	spdlog::set_level(spdlog::level::off);
 	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
@@ -353,9 +353,127 @@ TEST_F(Chip8Tests, TestRom)
 	ASSERT_NE(dataPath, nullptr);
 	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/test-rom.ch8"));
 
-	for (size_t i = 0; i < 50; ++i)
+	for (size_t i = 0; i < 500; ++i)
 	{
 		//		LOG_CRITICAL("i={}", i);
+		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
+	}
+
+	PrintDisplay(chip8);
+}
+
+TEST_F(Chip8Tests, TestRom2)
+{
+	spdlog::set_level(spdlog::level::off);
+	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
+	struct Chip8: public emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>
+	{
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_cpu;
+	};
+	Chip8 chip8;
+
+	auto* dataPath = std::getenv("DATA_PATH");
+	ASSERT_NE(dataPath, nullptr);
+	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/c8_test.c8"));
+
+	for (size_t i = 0; i < 500; ++i)
+	{
+		//		LOG_CRITICAL("i={}", i);
+		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
+	}
+
+	PrintDisplay(chip8);
+}
+
+TEST_F(Chip8Tests, IbmLogo)
+{
+	spdlog::set_level(spdlog::level::off);
+	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
+	struct Chip8: public emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>
+	{
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_cpu;
+	};
+	Chip8 chip8;
+
+	auto* dataPath = std::getenv("DATA_PATH");
+	ASSERT_NE(dataPath, nullptr);
+	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/ibm_logo.ch8"));
+
+	for (size_t i = 0; i < 500; ++i)
+	{
+		//		LOG_CRITICAL("i={}", i);
+		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
+	}
+
+	PrintDisplay(chip8);
+}
+
+TEST_F(Chip8Tests, BcTest)
+{
+	spdlog::set_level(spdlog::level::off);
+	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
+	struct Chip8: public emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>
+	{
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_cpu;
+	};
+	Chip8 chip8;
+
+	auto* dataPath = std::getenv("DATA_PATH");
+	ASSERT_NE(dataPath, nullptr);
+	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/BC_test.ch8"));
+
+	for (size_t i = 0; i < 500; ++i)
+	{
+		//		LOG_CRITICAL("i={}", i);
+		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
+	}
+
+	PrintDisplay(chip8);
+}
+
+TEST_F(Chip8Tests, ScTest)
+{
+	spdlog::set_level(spdlog::level::off);
+	spdlog::set_pattern("[%H:%M:%S.%F][%l][%!][ %s:%# ] %v");
+
+	struct Chip8: public emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>
+	{
+		using emu::detail::Chip8<TestCpu, emu::Rng, emu::Ram, emu::Display, emu::Keypad>::_cpu;
+	};
+	Chip8 chip8;
+
+	auto* dataPath = std::getenv("DATA_PATH");
+	ASSERT_NE(dataPath, nullptr);
+	ASSERT_TRUE(chip8.LoadRom(std::string(dataPath) + "/SCTEST.CH8"));
+
+	for (size_t i = 0; i < 500; ++i)
+	{
+//		LOG_CRITICAL("i={}", i);
+		if (i == 80 || i == 91)
+		{
+			// test rom assumes `1-1` sets V[0xF] = 1
+			// but documentation http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#8xy5
+			// says otherwise
+			// https://old.reddit.com/r/programming/comments/3ca4ry/writing_a_chip8_interpreteremulator_in_c14_10/csu7w8k/
+			// above link means people have different opinion about it
+			chip8._cpu.AdvanceProgramCounter();
+			chip8._cpu.AdvanceProgramCounter();
+		}
+		if (i == 131)
+		{
+			// SCHIP instruction 0xFx75 and 0xFx85: skip
+			for (size_t j = 0; j < 21; ++j, ++i)
+				chip8._cpu.AdvanceProgramCounter();
+		}
+		if (i == 157)
+		{
+			// Fx1E buffer overflow, again, people have mixed opinions about it
+			chip8._cpu.AdvanceProgramCounter();
+			chip8._cpu.AdvanceProgramCounter();
+		}
 		ASSERT_TRUE(chip8.Cycle()) << chip8.GetLastError();
 	}
 
@@ -375,7 +493,7 @@ static void CheckAreEqual(const EmuT& lhs, const EmuT& rhs)
 		ASSERT_EQ(lhs._cpu._registers[i], rhs._cpu._registers[i]);
 	ASSERT_EQ(lhs._cpu._delayTimer, rhs._cpu._delayTimer);
 	ASSERT_EQ(lhs._cpu._soundTimer, rhs._cpu._soundTimer);
-	
+
 	// check ram
 	for (size_t i = 0; i < lhs._ram.GetSize(); ++i)
 		ASSERT_EQ(lhs._ram.GetAt(i), rhs._ram.GetAt(i));

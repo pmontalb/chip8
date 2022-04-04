@@ -71,7 +71,7 @@ namespace emu
 		void CopyFrom(const size_t memoryStart, const Byte* source, const size_t nElements) override;
 		void WriteTo(const size_t memoryStart, Byte* dest, const size_t nElements) const override;
 
-		[[nodiscard]] Byte GetFontAt(const size_t index) const override;
+		[[nodiscard]] Byte GetFontAddressAt(const size_t index) const override;
 
 		void Serialize(std::vector<Byte>& byteArray) const override;
 		utils::Span<Byte> Deserialize(const utils::Span<Byte>& byteArray) override;

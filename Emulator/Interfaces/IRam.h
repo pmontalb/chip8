@@ -18,7 +18,7 @@ namespace emu
 		[[nodiscard]] virtual Byte GetAt(const std::size_t index) const = 0;
 		virtual void SetAt(const std::size_t index, const Byte value) = 0;
 
-		[[nodiscard]] virtual Byte GetFontAt(const std::size_t index) const = 0;
+		[[nodiscard]] virtual Byte GetFontAddressAt(const std::size_t index) const = 0;
 
 		virtual void CopyFrom(const std::size_t memoryStart, const Byte* source, const std::size_t nElements) = 0;
 		virtual void WriteTo(const std::size_t memoryStart, Byte* dest, const std::size_t nElements) const = 0;

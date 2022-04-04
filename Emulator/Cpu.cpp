@@ -154,8 +154,8 @@ namespace emu
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		const auto digit = _registers[Vx];
 		LOG_DEBUG("Vx({0:d}|{0:X}) digit({1:d}|{1:X}) indexRegister({2:d}|{2:X}) <~ font({3:d}|{3:X})", Vx, digit,
-				  _indexRegister, ram.GetFontAt(digit));
-		_indexRegister = ram.GetFontAt(digit);
+				  _indexRegister, ram.GetFontAddressAt(digit));
+		_indexRegister = ram.GetFontAddressAt(digit);
 	}
 	void Cpu::LoadRegistersFromRam(const TwoBytes instruction, IRam& ram)
 	{
@@ -315,7 +315,7 @@ namespace emu
 
 	void Cpu::SetIndexRegister(const TwoBytes instruction)
 	{
-		LOG_DEBUG("index({0:d}|{0:X}) = instr({1:d}|{1:X}) ", _indexRegister, utils::LowerTwelveBits(instruction));
+		LOG_DEBUG("index({0:d}|{0:X}) <~ instr({1:d}|{1:X}) ", _indexRegister, utils::LowerTwelveBits(instruction));
 		_indexRegister = utils::LowerTwelveBits(instruction);
 	}
 

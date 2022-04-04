@@ -29,12 +29,12 @@ TEST_F(RamTests, ZeroInitializationAtStartup)
 	}
 }
 
-TEST_F(RamTests, GetFirstCharOfFont)
+TEST_F(RamTests, GetFontAddress)
 {
 	emu::Ram ram;
 	for (size_t i = 0; i < (emu::endFonts - emu::fontsOffset) / emu::fontSize; ++i)
 	{
-		ASSERT_EQ(ram.GetFontAt(i), emu::fonts[i * emu::fontSize]) << i;
+		ASSERT_EQ(ram.GetFontAddressAt(i), emu::fontsOffset + i * emu::fontSize) << i;
 	}
 }
 

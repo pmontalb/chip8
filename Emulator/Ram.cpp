@@ -33,13 +33,13 @@ namespace emu
 		std::fill(_data.begin() + instructionStart + buffer.size(), _data.end(), 0x0);
 	}
 
-	Byte Ram::GetFontAt(const size_t index) const
+	Byte Ram::GetFontAddressAt(const size_t index) const
 	{
-		const auto offset = fontsOffset + index * fontSize;
-		assert(offset < endFonts);
-		LOG_DEBUG("index({}) offset({}) fontSize({}): value[{}]({})", index, fontsOffset, fontSize, offset, _data[offset]);
+		const auto address = fontsOffset + index * fontSize;
+		assert(address < endFonts);
+		LOG_DEBUG("index({}) offset({}) fontSize({}): address({})", index, fontsOffset, fontSize, address);
 
-		return _data[offset];
+		return static_cast<Byte>(address);
 	}
 	void Ram::CopyFrom(const size_t memoryStart, const Byte* source, const size_t nElements)
 	{

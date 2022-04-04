@@ -32,7 +32,7 @@ struct TestRam final: public emu::IRam
 	[[nodiscard]] emu::Byte GetAt(const std::size_t index) const override { return data.at(index); }
 	void SetAt(const std::size_t index, const emu::Byte value) override { data[index] = value; }
 
-	[[nodiscard]] emu::Byte GetFontAt(const std::size_t index) const override { return fonts[index]; }
+	[[nodiscard]] emu::Byte GetFontAddressAt(const std::size_t index) const override { return fonts[index]; }
 
 	void CopyFrom(const std::size_t idx, const emu::Byte* source, const std::size_t nElems) override
 	{
