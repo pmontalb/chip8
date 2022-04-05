@@ -303,14 +303,14 @@ private:
 
 		const auto& cpu = _emulator.GetCpu();
 		const auto& ram = _emulator.GetRam();
-		ImGui::Text("PC=0x%X", cpu.GetProgramCounter());
+		ImGui::Text("PC=0x%04X", cpu.GetProgramCounter());
 		ImGui::SameLine();
-		ImGui::Text("I=0x%X", cpu.GetIndexRegister());
+		ImGui::Text("I=0x%04X", cpu.GetIndexRegister());
 		//		ImGui::SameLine();
 		ImGui::Text("Current Instruction=0x%02X%02X", ram.GetAt(cpu.GetProgramCounter()),
 					ram.GetAt(cpu.GetProgramCounter() + 1));
-		ImGui::SameLine();
-		ImGui::Text("Last Instruction=%s", emu::ToString(_emulator.GetLastExecutedInstruction()).data());
+//		ImGui::SameLine();
+		ImGui::Text("Last Instruction=%s(0x%04X)", emu::ToString(_emulator.GetLastExecutedInstructionCode()).data(), _emulator.GetLastExecutedInstruction());
 		ImGui::Separator();
 
 		ImGui::BeginGroup();
@@ -578,6 +578,8 @@ private:
 			_running = false;
 		if (rewinding)
 		{
+			if (_cycles > 0)
+				--_cycles;
 			_emulator.Rewind();
 		}
 		else if (_running || stepping)
@@ -593,6 +595,7 @@ private:
 			}
 
 			bool success = _emulator.Cycle();
+			++_cycles;
 			if (stopOnError && !success)
 			{
 				_running = false;
@@ -611,6 +614,8 @@ private:
 		setUpMenuBar();
 
 		ImGui::Text("%.2f FPS", static_cast<double>(ImGui::GetIO().Framerate));
+//		ImGui::SameLine();
+		ImGui::Text("%llu Cycles", _cycles);
 
 		runEmulator();
 
@@ -646,6 +651,7 @@ private:
 	bool _running = false;
 	bool _capFps = true;
 	float _fps = 60.0;
+	unsigned long long _cycles = 0;
 };
 
 int main(int /*argc*/, char** /*argv*/)

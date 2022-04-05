@@ -28,7 +28,8 @@ namespace emu
 
 			bool Cycle();
 			void Rewind();
-			Instruction GetLastExecutedInstruction() const { return _lastExecutedInstruction; }
+			Instruction GetLastExecutedInstructionCode() const { return _lastExecutedInstructionCode; }
+			TwoBytes GetLastExecutedInstruction() const { return _lastExecutedInstruction; }
 
 			const auto& GetDisplay() const { return _display; }
 			const auto& GetCpu() const { return _cpu; }
@@ -57,7 +58,8 @@ namespace emu
 			KeypadT _keypad {};
 
 		private:
-			Instruction _lastExecutedInstruction = Instruction::INVALID;
+			TwoBytes _lastExecutedInstruction = 0x0;
+			Instruction _lastExecutedInstructionCode = Instruction::INVALID;
 			using InstructionSetWorker = std::function<void(const TwoBytes)>;
 			using InstructionPair = std::pair<Instruction, InstructionSetWorker>;
 

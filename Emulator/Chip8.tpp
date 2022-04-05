@@ -78,9 +78,9 @@ namespace emu::detail
 
 		_0xExyzInstructions.fill({ Instruction::INVALID, invalidInstruction });
 		_0xExyzInstructions[0x1] = { detail::_0xExyzInstructions[0x1], [this](const TwoBytes instruction)
-									 { this->_cpu.ConditionalSkipIfKeyPressed(instruction, this->_keypad); } };
-		_0xExyzInstructions[0xE] = { detail::_0xExyzInstructions[0xE], [this](const TwoBytes instruction)
 									 { this->_cpu.ConditionalSkipIfKeyNotPressed(instruction, this->_keypad); } };
+		_0xExyzInstructions[0xE] = { detail::_0xExyzInstructions[0xE], [this](const TwoBytes instruction)
+									 { this->_cpu.ConditionalSkipIfKeyPressed(instruction, this->_keypad); } };
 
 		_0xFxyzInstructions.fill({ Instruction::INVALID, invalidInstruction });
 		_0xFxyzInstructions[0x07] = { detail::_0xFxyzInstructions[0x07],
@@ -124,7 +124,8 @@ namespace emu::detail
 							LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) lowestFourBits({2:d}|{2:X}) 0x00E{2:X}",
 									 instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lowestFourBits);
 							_0x00EkInstructions[lowestFourBits].second(instruction);
-							_lastExecutedInstruction = _0x00EkInstructions[lowestFourBits].first;
+							_lastExecutedInstructionCode = _0x00EkInstructions[lowestFourBits].first;
+							_lastExecutedInstruction = instruction;
 						}
 					};
 				}
@@ -146,7 +147,8 @@ namespace emu::detail
 							LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0x8xy{2:X}",
 									 instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lastFourBits);
 							_0x80xyInstructions[lastFourBits].second(instruction);
-							_lastExecutedInstruction = _0x80xyInstructions[lastFourBits].first;
+							_lastExecutedInstructionCode = _0x80xyInstructions[lastFourBits].first;
+							_lastExecutedInstruction = instruction;
 						}
 					};
 				}
@@ -168,7 +170,8 @@ namespace emu::detail
 							LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0xExy{2:X}",
 									 instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lastFourBits);
 							_0xExyzInstructions[lastFourBits].second(instruction);
-							_lastExecutedInstruction = _0xExyzInstructions[lastFourBits].first;
+							_lastExecutedInstructionCode = _0xExyzInstructions[lastFourBits].first;
+							_lastExecutedInstruction = instruction;
 						}
 					};
 				}
@@ -190,7 +193,8 @@ namespace emu::detail
 							LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) last4Bits({2:d}|{2:X}): 0xFx{2:X}",
 									 instruction, static_cast<Byte>((instruction & 0xF000ul) >> 12ul), lowestByte);
 							_0xFxyzInstructions[lowestByte].second(instruction);
-							_lastExecutedInstruction = _0xFxyzInstructions[lowestByte].first;
+							_lastExecutedInstructionCode = _0xFxyzInstructions[lowestByte].first;
+							_lastExecutedInstruction = instruction;
 						}
 					};
 				}
@@ -204,8 +208,9 @@ namespace emu::detail
 											   LOG_INFO("instruction({0:d}|{0:X}) msb({1:d}|{1:X}) 0x{1:X}xyz",
 														instruction, mostSignificantBit);
 											   _uniquePatternInstructions[mostSignificantBit].second(instruction);
-											   _lastExecutedInstruction =
+											   _lastExecutedInstructionCode =
 												   _uniquePatternInstructions[mostSignificantBit].first;
+											   _lastExecutedInstruction = instruction;
 										   } };
 				}
 			});
@@ -348,7 +353,8 @@ namespace emu::detail
 				$Fx65
 		 * */
 
-		_lastExecutedInstruction = Instruction::INVALID;
+		_lastExecutedInstructionCode = Instruction::INVALID;
+		_lastExecutedInstruction = 0x0;
 
 		// zero out the first 3 nibbles and shift it down by 12 bits
 		const auto mostSignificantBit = static_cast<Byte>((instruction & 0xF000ul) >> 12ul);
