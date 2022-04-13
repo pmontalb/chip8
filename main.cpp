@@ -48,8 +48,8 @@
 __START_IGNORING_WARNINGS__
 __IGNORE_MAHI_GUI_WARNINGS__
 #include <Mahi/Gui.hpp>
-#include <Mahi/Util/Timing/Frequency.hpp>
 #include <Mahi/Gui/Native.hpp>
+#include <Mahi/Util/Timing/Frequency.hpp>
 #include <imgui_internal.h>
 __STOP_IGNORING_WARNINGS__
 
@@ -137,7 +137,8 @@ namespace detail
 }	 // namespace detail
 static inline auto GetKeysPressed()
 {
-	return detail::GetKeyPressedOrReleasedWorker([](int x) { return ImGui::IsKeyPressed(x) || ImGui::GetIO().KeysDownDuration[x] > 0.0f; }, true);
+	return detail::GetKeyPressedOrReleasedWorker(
+		[](int x) { return ImGui::IsKeyPressed(x) || ImGui::GetIO().KeysDownDuration[x] > 0.0f; }, true);
 }
 static inline auto GetKeysReleased()
 {
@@ -246,6 +247,7 @@ public:
 		: Application(config), _sink(std::move(sink))
 	{
 		spdlog::set_level(logLevel);
+		setFpsLimit();
 	}
 	virtual ~ChipEightEmulator() = default;
 
@@ -253,11 +255,19 @@ private:
 	// Override update (called once per frame)
 	void update() override { emulatorExample(); }
 
+	void setFpsLimit()
+	{
+		if (_capFps)
+			set_frame_limit(mahi::util::hertz(static_cast<long long int>(_fps)));
+		else
+			set_frame_limit(mahi::util::hertz(0));
+	}
+
 	void setUpDebuggingWindow()
 	{
-//		ImGui::SetNextWindowPos({ 60, 60 });
+		//		ImGui::SetNextWindowPos({ 60, 60 });
 		ImGui::SetNextWindowSize({ 400, 400 }, ImGuiCond_Once);
-		ImGui::Begin("Debug", &open);
+		ImGui::Begin("Debug", &debuggingWindow);
 		if (ImGui::BeginCombo("Debug Level", to_string_view(logLevel).data()))
 		{
 			for (auto level : { spdlog::level::off, spdlog::level::critical, spdlog::level::err, spdlog::level::warn,
@@ -297,9 +307,9 @@ private:
 
 	void setUpDisassemblerView()
 	{
-//		ImGui::SetNextWindowPos({ 540, 50 });
+		//		ImGui::SetNextWindowPos({ 540, 50 });
 		ImGui::SetNextWindowSize(ImVec2(940, 830), ImGuiCond_Once);
-		ImGui::Begin("Cpu View", &open);
+		ImGui::Begin("Cpu View", &disassemblerWindow);
 
 		const auto& cpu = _emulator.GetCpu();
 		const auto& ram = _emulator.GetRam();
@@ -309,8 +319,9 @@ private:
 		//		ImGui::SameLine();
 		ImGui::Text("Current Instruction=0x%02X%02X", ram.GetAt(cpu.GetProgramCounter()),
 					ram.GetAt(cpu.GetProgramCounter() + 1));
-//		ImGui::SameLine();
-		ImGui::Text("Last Instruction=%s(0x%04X)", emu::ToString(_emulator.GetLastExecutedInstructionCode()).data(), _emulator.GetLastExecutedInstruction());
+		//		ImGui::SameLine();
+		ImGui::Text("Last Instruction=%s(0x%04X)", emu::ToString(_emulator.GetLastExecutedInstructionCode()).data(),
+					_emulator.GetLastExecutedInstruction());
 		ImGui::Separator();
 
 		ImGui::BeginGroup();
@@ -338,23 +349,23 @@ private:
 
 		ImGui::BeginGroupPanel("Keypad", ImVec2(0.0f, 0.0f));
 
-//		const auto pressedKeys = GetKeysPressed();
-//		const auto releasedKeys = GetKeysReleased();
+		//		const auto pressedKeys = GetKeysPressed();
+		//		const auto releasedKeys = GetKeysReleased();
 		for (size_t k = emu::Keys::START; k < emu::Keys::END; ++k)
 		{
 			ImGui::Text("Key[%s]", emu::ToString(static_cast<emu::Keys::Enum>(k)).data());
-//			ImGui::SameLine();
-//			bool p = pressedKeys[k];
-//			ImGui::Checkbox("", &p);
-//
+			//			ImGui::SameLine();
+			//			bool p = pressedKeys[k];
+			//			ImGui::Checkbox("", &p);
+			//
 			ImGui::SameLine();
 
 			bool isKeyPressed = _emulator.GetKeypad().IsPressed(static_cast<emu::Keys::Enum>(k));
 			ImGui::Checkbox("", &isKeyPressed);
-//			if (pressedKeys[k])
-//				_emulator.GetKeypad().Press(static_cast<emu::Keys::Enum>(k), true);
-//			else if (releasedKeys[k])
-//				_emulator.GetKeypad().Press(static_cast<emu::Keys::Enum>(k), false);
+			//			if (pressedKeys[k])
+			//				_emulator.GetKeypad().Press(static_cast<emu::Keys::Enum>(k), true);
+			//			else if (releasedKeys[k])
+			//				_emulator.GetKeypad().Press(static_cast<emu::Keys::Enum>(k), false);
 		}
 
 		ImGui::EndGroupPanel();
@@ -375,11 +386,9 @@ private:
 				else
 				{
 					if (i == cpu.GetProgramCounter())
-						ImGui::TextColored(mahi::gui::Colors::Orange, "%02X %02X", ram.GetAt(i),
-										   ram.GetAt(i + 1));
+						ImGui::TextColored(mahi::gui::Colors::Orange, "%02X %02X", ram.GetAt(i), ram.GetAt(i + 1));
 					else if (i == cpu.GetIndexRegister())
-						ImGui::TextColored(mahi::gui::Colors::Green, "%02X %02X", ram.GetAt(i),
-										   ram.GetAt(i + 1));
+						ImGui::TextColored(mahi::gui::Colors::Green, "%02X %02X", ram.GetAt(i), ram.GetAt(i + 1));
 					else
 						ImGui::Text("%02X %02X", ram.GetAt(i), ram.GetAt(i + 1));
 				}
@@ -472,6 +481,7 @@ private:
 
 				ImGui::EndMenu();
 			}
+
 			if (ImGui::BeginMenu("Edit"))
 			{
 				if (ImGui::MenuItem("Restart"))
@@ -493,6 +503,17 @@ private:
 					set_frame_limit(mahi::util::hertz(0));
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("View"))
+			{
+				ImGui::SliderFloat("Pixel Size", &pixelSize, 0.1f, 20.0f, "%.1f");
+				ImGui::SliderFloat("X-Padding", &xPadding, 0.f, 100.0f, "%.1f");
+				ImGui::SliderFloat("Y-Padding", &yPadding, 0.f, 100.0f, "%.1f");
+
+				ImGui::ColorEdit3("Pixel Color", pixelColor.rgba);
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMainMenuBar();
 		}
 
@@ -535,54 +556,65 @@ private:
 	void drawEmulatorScreen()
 	{
 		auto* drawList = ImGui::GetWindowDrawList();
+
 		auto p = ImGui::GetCursorScreenPos();
 		drawList->AddRect(
 			p,
 			{ p.x + 2.0f * xPadding + static_cast<float>(_emulator.GetDisplay().GetWidth()) * pixelSize,
 			  p.y + 2.0f * yPadding + static_cast<float>(_emulator.GetDisplay().GetHeight()) * pixelSize },
-			frameColor);
+			ImGui::Convert(frameColor));
 		p.x += xPadding;
 		p.y += yPadding;
 
-		if (_emulator.GetDisplay().HasChanged())
+		for (size_t row = 0; row < _emulator.GetDisplay().GetWidth(); ++row)
 		{
-			for (size_t row = 0; row < _emulator.GetDisplay().GetWidth(); ++row)
-			{
-				auto pixelStart = p;
-				pixelStart.x = p.x + static_cast<float>(row) * pixelSize;
+			auto pixelStart = p;
+			pixelStart.x = p.x + static_cast<float>(row) * pixelSize;
 
-				for (size_t col = 0; col < _emulator.GetDisplay().GetHeight(); ++col)
-				{
-					pixelStart.y = p.y + static_cast<float>(col) * pixelSize;
-					ImVec2 pixelEnd = { pixelStart.x + pixelSize, pixelStart.y + pixelSize };
-					const size_t coord = row + col * _emulator.GetDisplay().GetWidth();
-					if (_emulator.GetDisplay().GetAt(coord))
-						drawList->AddRectFilled(pixelStart, pixelEnd, pixelColor);
-				}
+			for (size_t col = 0; col < _emulator.GetDisplay().GetHeight(); ++col)
+			{
+				pixelStart.y = p.y + static_cast<float>(col) * pixelSize;
+				ImVec2 pixelEnd = { pixelStart.x + pixelSize, pixelStart.y + pixelSize };
+				const size_t coord = row + col * _emulator.GetDisplay().GetWidth();
+				if (_emulator.GetDisplay().GetAt(coord))
+					drawList->AddRectFilled(pixelStart, pixelEnd, ImGui::Convert(pixelColor));
 			}
 		}
 	}
 
-	void runEmulator()
+	void setupMainWindow()
 	{
+		const auto xDim = 2.0f * xPadding + static_cast<float>(_emulator.GetDisplay().GetWidth()) * pixelSize;
+		const auto yDim = 2.0f * yPadding + static_cast<float>(_emulator.GetDisplay().GetHeight()) * pixelSize;
+		ImGui::SetNextWindowSize(ImVec2(100 + xDim, 100 + yDim), ImGuiCond_Always);
+		ImGui::Begin("Display", &open, ImGuiWindowFlags_NoResize);
+
+		ImGui::Text("%.2f FPS", static_cast<double>(ImGui::GetIO().Framerate));
+		//		ImGui::SameLine();
+		ImGui::Text("%lu Cycles", _cycles);
+
 		if (ImGui::Button("Play"))
 			_running = true;
 		ImGui::SameLine();
 		if (ImGui::Button("Stop"))
 			_running = false;
 		ImGui::SameLine();
-		const bool stepping = ImGui::Button("Step");
+		_stepping = ImGui::Button("Step");
 		ImGui::SameLine();
-		const bool rewinding = ImGui::Button("Rewind");
-		if (stepping || rewinding)
+		_rewinding = ImGui::Button("Rewind");
+		if (_stepping || _rewinding)
 			_running = false;
-		if (rewinding)
+	}
+
+	void runEmulator()
+	{
+		if (_rewinding)
 		{
 			if (_cycles > 0)
 				--_cycles;
 			_emulator.Rewind();
 		}
-		else if (_running || stepping)
+		else if (_running || _stepping)
 		{
 			const auto pressedKeys = GetKeysPressed();
 			const auto releasedKeys = GetKeysReleased();
@@ -605,21 +637,13 @@ private:
 
 	void emulatorExample()
 	{
-		ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
-		ImGui::Begin("Display", &open);
+		setupMainWindow();
+		runEmulator();
+		drawEmulatorScreen();
 
 		setUpDebuggingWindow();
 		setUpDisassemblerView();
-
 		setUpMenuBar();
-
-		ImGui::Text("%.2f FPS", static_cast<double>(ImGui::GetIO().Framerate));
-//		ImGui::SameLine();
-		ImGui::Text("%llu Cycles", _cycles);
-
-		runEmulator();
-
-		drawEmulatorScreen();
 
 		if (!open)
 			quit();
@@ -631,11 +655,13 @@ private:
 private:
 	std::shared_ptr<utils::RingBufferSinkSt> _sink {};
 	bool open = true;
+	bool debuggingWindow = true;
+	bool disassemblerWindow = true;
 	emu::Chip8 _emulator {};
 	ImGuiTextFilter filter {};
 
-	ImU32 pixelColor { IM_COL32(255, 0, 0, 255) };
-	ImU32 frameColor { IM_COL32(255, 255, 255, 255) };
+	mahi::gui::Color pixelColor { mahi::gui::Colors::Red };
+	mahi::gui::Color frameColor {{{ 1.0f, 1.0f, 1.0f, 0.1f }}};
 	float pixelSize = 4.0f;
 	float xPadding = 50.0f;
 	float yPadding = 50.0f;
@@ -649,9 +675,11 @@ private:
 	SaveStateOperation saveStateOperation = SaveStateOperation::None;
 
 	bool _running = false;
+	bool _rewinding = false;
+	bool _stepping = false;
 	bool _capFps = true;
-	float _fps = 60.0;
-	unsigned long long _cycles = 0;
+	float _fps = 60.0f;
+	std::uint64_t _cycles = 0;
 };
 
 int main(int /*argc*/, char** /*argv*/)
@@ -671,7 +699,7 @@ int main(int /*argc*/, char** /*argv*/)
 	config.decorated = true;
 	//		config.background = mahi::gui::Colors::Auto;
 	ChipEightEmulator app(config, sink);
-//	app.set_frame_limit(mahi::util::hertz(60));
+	//	app.set_frame_limit(mahi::util::hertz(60));
 	app.run();
 	return 0;
 }
