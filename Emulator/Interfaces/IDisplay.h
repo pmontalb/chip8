@@ -10,6 +10,11 @@ namespace emu
 	public:
 		virtual ~IDisplay() = default;
 
+		// once you define the dtor, clang warns you about deprecated implicit definitions
+		IDisplay() = default;
+		IDisplay(const IDisplay&) = default;
+		IDisplay& operator=(const IDisplay&) = default;
+
 		[[nodiscard]] virtual std::size_t GetWidth() const = 0;
 		[[nodiscard]] virtual std::size_t GetHeight() const = 0;
 		virtual void Clear() = 0;

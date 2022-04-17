@@ -8,53 +8,57 @@
 
 namespace emu
 {
-	enum class Instruction
+	namespace Instruction
 	{
-		_0x00E0,
-		_0x00EE,
+		enum Enum
+		{
+			START = 0,
+			_0x00E0 = START,
+			_0x00EE,
 
-		_0x1nnn,
-		_0x2nnn,
-		_0x3xkk,
-		_0x4xkk,
-		_0x5xy0,
-		_0x6xkk,
-		_0x7xkk,
+			_0x1nnn,
+			_0x2nnn,
+			_0x3xkk,
+			_0x4xkk,
+			_0x5xy0,
+			_0x6xkk,
+			_0x7xkk,
 
-		_0x8xy0,
-		_0x8xy1,
-		_0x8xy2,
-		_0x8xy3,
-		_0x8xy4,
-		_0x8xy5,
-		_0x8xy6,
-		_0x8xy7,
-		_0x8xyE,
+			_0x8xy0,
+			_0x8xy1,
+			_0x8xy2,
+			_0x8xy3,
+			_0x8xy4,
+			_0x8xy5,
+			_0x8xy6,
+			_0x8xy7,
+			_0x8xyE,
 
-		_0x9xy0,
-		_0xAnnn,
-		_0xBnnn,
-		_0xCxkk,
-		_0xDxyn,
+			_0x9xy0,
+			_0xAnnn,
+			_0xBnnn,
+			_0xCxkk,
+			_0xDxyn,
 
-		_0xExA1,
-		_0xEx9E,
+			_0xExA1,
+			_0xEx9E,
 
-		_0xFx07,
-		_0xFx0A,
-		_0xFx15,
-		_0xFx18,
-		_0xFx1E,
-		_0xFx29,
-		_0xFx33,
-		_0xFx55,
-		_0xFx65,
+			_0xFx07,
+			_0xFx0A,
+			_0xFx15,
+			_0xFx18,
+			_0xFx1E,
+			_0xFx29,
+			_0xFx33,
+			_0xFx55,
+			_0xFx65,
 
-		INVALID,
-	};
+			END,
+		};
+	}	 // namespace Instruction
 
 	// clang-format off
-	static constexpr std::size_t nInstructions = 35;
+	static constexpr std::size_t nInstructions = Instruction::END + 1;
 	static constexpr std::array<std::string_view, nInstructions> instructionSetIds = {{
 		"0x00E0",
 		"0x00EE",
@@ -98,16 +102,60 @@ namespace emu
 
 		"INVALID",
 	}};
+
+	static constexpr std::array<std::string_view, nInstructions> cpuInstructionMapping = {{
+		"ClearDisplay",
+		"ReturnFromSubRoutine",
+
+		"JumpToAddress",
+		"CallSubRoutine",
+		"ConditionalSkipIfByteEqual",
+		"ConditionalSkipIfByteNotEqual",
+		"ConditionalSkipIfRegistersEqual",
+		"LoadByte",
+		"AddEqualByte",
+
+		"LoadRegister",
+		"OrEqualRegister",
+		"AndEqualRegister",
+		"XorEqualRegister",
+		"AddRegistersAndStoreLastByte",
+		"SubtractEqualRegisters",
+		"ShiftRightAndStoreLastBit",
+		"OppositeSubtractRegisters",
+		"ShiftLeftAndStoreFirstBit",
+
+		"ConditionalSkipIfRegistersNotEqual",
+		"SetIndexRegister",
+		"JumpToLastTwelveBitsPlusFirstRegister",
+		"RandomAndEqualByte",
+		"Draw",
+
+		"ConditionalSkipIfKeyNotPressed",
+		"ConditionalSkipIfKeyPressed",
+
+		"LoadDelayTimer",
+		"WaitUntilKeyIsPressed",
+		"SetDelayTimer",
+		"SetSoundTimer",
+		"IndexRegisterAddEqualRegister",
+		"LoadFontIntoIndexRegister",
+		"StoreBinaryCodeRepresentation",
+		"StoreRegistersInRam",
+		"LoadRegistersFromRam",
+
+		"INVALID",
+	}};
 	// clang-format on
-	static constexpr inline std::string_view ToString(const Instruction instruction)
+	static constexpr inline std::string_view ToString(const Instruction::Enum instruction)
 	{
 		return instructionSetIds[static_cast<size_t>(instruction)];
 	}
 
 	namespace detail
 	{
-		static constexpr std::array<Instruction, 14> _uniquePatternInstructions = { {
-			Instruction::INVALID,
+		static constexpr std::array<Instruction::Enum, 14> _uniquePatternInstructions = { {
+			Instruction::END,
 			Instruction::_0x1nnn,
 			Instruction::_0x2nnn,
 			Instruction::_0x3xkk,
@@ -115,7 +163,7 @@ namespace emu
 			Instruction::_0x5xy0,
 			Instruction::_0x6xkk,
 			Instruction::_0x7xkk,
-			Instruction::INVALID,
+			Instruction::END,
 			Instruction::_0x9xy0,
 			Instruction::_0xAnnn,
 			Instruction::_0xBnnn,
@@ -123,7 +171,7 @@ namespace emu
 			Instruction::_0xDxyn,
 		} };
 
-		static constexpr std::array<Instruction, 15> _0x80xyInstructions = { {
+		static constexpr std::array<Instruction::Enum, 15> _0x80xyInstructions = { {
 			Instruction::_0x8xy0,
 			Instruction::_0x8xy1,
 			Instruction::_0x8xy2,
@@ -132,56 +180,56 @@ namespace emu
 			Instruction::_0x8xy5,
 			Instruction::_0x8xy6,
 			Instruction::_0x8xy7,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
 			Instruction::_0x8xyE,
 		} };
 
-		static constexpr std::array<Instruction, 15> _0x00EkInstructions = { {
+		static constexpr std::array<Instruction::Enum, 15> _0x00EkInstructions = { {
 			Instruction::_0x00E0,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
 			Instruction::_0x00EE,
 		} };
 
-		static constexpr std::array<Instruction, 15> _0xExyzInstructions = { {
-			Instruction::INVALID,
+		static constexpr std::array<Instruction::Enum, 15> _0xExyzInstructions = { {
+			Instruction::END,
 			Instruction::_0xExA1,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
-			Instruction::INVALID,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
+			Instruction::END,
 			Instruction::_0xEx9E,
 		} };
 
 
-		static constexpr std::array<Instruction, 0x66> Get0xFxyzInstructionSet()
+		static constexpr std::array<Instruction::Enum, 0x66> Get0xFxyzInstructionSet()
 		{
-			std::array<Instruction, 0x66> ret {};
-			utils::ConstexprFor<0, 0x66>([&](const auto i) { ret[i] = Instruction::INVALID; });
+			std::array<Instruction::Enum, 0x66> ret {};
+			utils::ConstexprFor<0, 0x66>([&](const auto i) { ret[i] = Instruction::END; });
 
 			ret[0x07] = Instruction::_0xFx07;
 			ret[0x0A] = Instruction::_0xFx0A;
@@ -195,6 +243,6 @@ namespace emu
 
 			return ret;
 		}
-		static inline constexpr std::array<Instruction, 0x66> _0xFxyzInstructions = Get0xFxyzInstructionSet();
+		static inline constexpr std::array<Instruction::Enum, 0x66> _0xFxyzInstructions = Get0xFxyzInstructionSet();
 	}	 // namespace detail
 }	 // namespace emu

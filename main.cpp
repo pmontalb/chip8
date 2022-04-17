@@ -21,7 +21,8 @@
 		__IGNORE_WARNING__("-Wzero-as-null-pointer-constant")                                                          \
 		__IGNORE_WARNING__("-Wdeprecated-copy-dtor")                                                                   \
 		__IGNORE_WARNING__("-Wextra-semi")                                                                             \
-		__IGNORE_WARNING__("-Wundefined-func-template")                                                                \
+		__IGNORE_WARNING__("-Wundefined-func-template")                                                                   \
+        __IGNORE_WARNING__("-Wreserved-identifier")                                                                \
 		__IGNORE_WARNING__("-Wshadow-field-in-constructor")
 #else
 	#define __IGNORE_MAHI_GUI_WARNINGS__                                                                               \
@@ -58,11 +59,10 @@ __STOP_IGNORING_WARNINGS__
 
 #include "Emulator/Chip8.h"
 #include "Emulator/RingBuffer.h"
+#include "Emulator/Stopwatch.h"
 
 #include <mutex>
 #include <thread>
-
-#include "Emulator/Stopwatch.h"
 
 enum class SaveStateOperation
 {
@@ -385,11 +385,16 @@ private:
 		ImGui::Text("PC=0x%04X", cpu.GetProgramCounter());
 		ImGui::SameLine();
 		ImGui::Text("I=0x%04X", cpu.GetIndexRegister());
+		ImGui::SameLine();
+		ImGui::Text("DT=0x%04X", cpu.GetDelayTimer());
+		ImGui::SameLine();
+		ImGui::Text("ST=0x%04X", cpu.GetSoundTimer());
 		//		ImGui::SameLine();
 		ImGui::Text("Current Instruction=0x%02X%02X", ram.GetAt(cpu.GetProgramCounter()),
 					ram.GetAt(cpu.GetProgramCounter() + 1));
 		//		ImGui::SameLine();
-		ImGui::Text("Last Instruction=%s(0x%04X)", emu::ToString(_emulator.GetLastExecutedInstructionCode()).data(),
+		ImGui::Text("Last Instruction=%s|%s|0x%04X", emu::ToString(_emulator.GetLastExecutedInstructionCode()).data(),
+					emu::cpuInstructionMapping[_emulator.GetLastExecutedInstructionCode()].data(),
 					_emulator.GetLastExecutedInstruction());
 		ImGui::Separator();
 
@@ -410,7 +415,7 @@ private:
 		ImGui::BeginGroupPanel("Registers", ImVec2(0.0f, 0.0f));
 		for (size_t i = 0; i < cpu.GetRegisters().size(); ++i)
 		{
-			ImGui::Text("V[%zX]: 0x%X", i, cpu.GetRegisters()[i]);
+			ImGui::Text("V%zX: 0x%X", i, cpu.GetRegisters()[i]);
 		}
 		ImGui::EndGroupPanel();
 

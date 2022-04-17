@@ -79,8 +79,6 @@ namespace emu
 				return "B";
 			case Keys::F:
 				return "F";
-			case Keys::END:
-				return "???";
 			default:
 				return "???";
 		}
@@ -96,6 +94,12 @@ namespace emu
 	{
 	public:
 		virtual ~IKeypad() = default;
+
+		// once you define the dtor, clang warns you about deprecated implicit definitions
+		IKeypad() = default;
+		IKeypad(const IKeypad&) = default;
+		IKeypad& operator=(const IKeypad&) = default;
+
 		[[nodiscard]] virtual bool IsPressed(const Keys::Enum keyCode) const = 0;
 		[[nodiscard]] virtual Byte GetSize() const = 0;
 		virtual void Press(const Keys::Enum keyCode, const bool toggle) = 0;

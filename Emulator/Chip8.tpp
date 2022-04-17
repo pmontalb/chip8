@@ -6,14 +6,14 @@
 
 namespace emu::detail
 {
-	static inline const std::function<void(const TwoBytes)> invalidInstruction = [](const TwoBytes instruction)
-	{
-		LOG_CRITICAL("this instruction({}) shouldn't be called", instruction);
-		//		assert(false);
-	};
-
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
 	Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::Chip8()
+		: _invalidInstruction(
+			  [this](const TwoBytes instruction)
+			  {
+				  LOG_CRITICAL("this instruction({}) shouldn't be called", instruction);
+				  _lastError = Error::InvalidInstruction;
+			  })
 	{
 		Initialize();
 		PopulateInstructionSetFunctionPointers();
@@ -22,7 +22,7 @@ namespace emu::detail
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
 	void Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::PopulateInstructionSetFunctionPointers()
 	{
-		_uniquePatternInstructions[0x0] = { detail::_uniquePatternInstructions[0x0], invalidInstruction };
+		_uniquePatternInstructions[0x0] = { detail::_uniquePatternInstructions[0x0], _invalidInstruction };
 		_uniquePatternInstructions[0x1] = { detail::_uniquePatternInstructions[0x1], [this](const TwoBytes instruction)
 											{ this->_cpu.JumpToAddress(instruction); } };
 		_uniquePatternInstructions[0x2] = { detail::_uniquePatternInstructions[0x2], [this](const TwoBytes instruction)
@@ -37,7 +37,7 @@ namespace emu::detail
 											[this](const TwoBytes instruction) { this->_cpu.LoadByte(instruction); } };
 		_uniquePatternInstructions[0x7] = { detail::_uniquePatternInstructions[0x7], [this](const TwoBytes instruction)
 											{ this->_cpu.AddEqualByte(instruction); } };
-		_uniquePatternInstructions[0x8] = { detail::_uniquePatternInstructions[0x8], invalidInstruction };
+		_uniquePatternInstructions[0x8] = { detail::_uniquePatternInstructions[0x8], _invalidInstruction };
 		_uniquePatternInstructions[0x9] = { detail::_uniquePatternInstructions[0x9], [this](const TwoBytes instruction)
 											{ this->_cpu.ConditionalSkipIfRegistersNotEqual(instruction); } };
 		_uniquePatternInstructions[0xA] = { detail::_uniquePatternInstructions[0xA], [this](const TwoBytes instruction)
@@ -66,23 +66,23 @@ namespace emu::detail
 		_0x80xyInstructions[0x7] = { detail::_0x80xyInstructions[0x7], [this](const TwoBytes instruction)
 									 { this->_cpu.OppositeSubtractRegisters(instruction); } };
 		for (size_t i = 0x8; i <= 0xD; ++i)
-			_0x80xyInstructions[i] = { detail::_0x80xyInstructions[i], invalidInstruction };
+			_0x80xyInstructions[i] = { detail::_0x80xyInstructions[i], _invalidInstruction };
 		_0x80xyInstructions[0xE] = { detail::_0x80xyInstructions[0xE], [this](const TwoBytes instruction)
 									 { this->_cpu.ShiftLeftAndStoreFirstBit(instruction); } };
 
-		_0x00EkInstructions.fill({ Instruction::INVALID, invalidInstruction });
+		_0x00EkInstructions.fill({ Instruction::END, _invalidInstruction });
 		_0x00EkInstructions[0x0] = { detail::_0x00EkInstructions[0x0],
 									 [this](const TwoBytes) { this->_display.Clear(); } };
 		_0x00EkInstructions[0xE] = { detail::_0x00EkInstructions[0xE],
 									 [this](const TwoBytes) { this->_cpu.ReturnFromSubRoutine(); } };
 
-		_0xExyzInstructions.fill({ Instruction::INVALID, invalidInstruction });
+		_0xExyzInstructions.fill({ Instruction::END, _invalidInstruction });
 		_0xExyzInstructions[0x1] = { detail::_0xExyzInstructions[0x1], [this](const TwoBytes instruction)
 									 { this->_cpu.ConditionalSkipIfKeyNotPressed(instruction, this->_keypad); } };
 		_0xExyzInstructions[0xE] = { detail::_0xExyzInstructions[0xE], [this](const TwoBytes instruction)
 									 { this->_cpu.ConditionalSkipIfKeyPressed(instruction, this->_keypad); } };
 
-		_0xFxyzInstructions.fill({ Instruction::INVALID, invalidInstruction });
+		_0xFxyzInstructions.fill({ Instruction::END, _invalidInstruction });
 		_0xFxyzInstructions[0x07] = { detail::_0xFxyzInstructions[0x07],
 									  [this](const TwoBytes instruction) { this->_cpu.LoadDelayTimer(instruction); } };
 		_0xFxyzInstructions[0x0A] = { detail::_0xFxyzInstructions[0x0A], [this](const TwoBytes instruction)
@@ -108,7 +108,7 @@ namespace emu::detail
 				if constexpr (i == 0)
 				{
 					_instructionSet[i] = {
-						Instruction::INVALID,
+						Instruction::END,
 						[&](const TwoBytes instruction)
 						{
 							const auto lowestFourBits = utils::LowestFourBits(instruction);
@@ -132,7 +132,7 @@ namespace emu::detail
 				else if constexpr (i == 8)
 				{
 					_instructionSet[i] = {
-						Instruction::INVALID,
+						Instruction::END,
 						[&](const TwoBytes instruction)
 						{
 							const auto lastFourBits = utils::LowestFourBits(instruction);
@@ -155,7 +155,7 @@ namespace emu::detail
 				else if constexpr (i == 0xE)
 				{
 					_instructionSet[i] = {
-						Instruction::INVALID,
+						Instruction::END,
 						[&](const TwoBytes instruction)
 						{
 							const auto lastFourBits = utils::LowestFourBits(instruction);
@@ -178,7 +178,7 @@ namespace emu::detail
 				else if constexpr (i == 0xF)
 				{
 					_instructionSet[i] = {
-						Instruction::INVALID,
+						Instruction::END,
 						[&](const TwoBytes instruction)
 						{
 							const auto lowestByte = utils::LowestByte(instruction);
@@ -200,7 +200,7 @@ namespace emu::detail
 				}
 				else
 				{
-					_instructionSet[i] = { Instruction::INVALID, [&](const TwoBytes instruction)
+					_instructionSet[i] = { Instruction::END, [&](const TwoBytes instruction)
 										   {
 											   const auto mostSignificantBit =
 												   static_cast<Byte>((instruction & 0xF000ul) >> 12ul);
@@ -219,9 +219,9 @@ namespace emu::detail
 	template<typename CpuT, typename RngT, typename RamT, typename DisplayT, typename KeypadT>
 	void Chip8<CpuT, RngT, RamT, DisplayT, KeypadT>::Initialize()
 	{
-		_cpu = CpuT{};
-		_display = DisplayT{};
-		_keypad = KeypadT{};
+		_cpu = CpuT {};
+		_display = DisplayT {};
+		_keypad = KeypadT {};
 
 		_cpu.SetProgramCounter(static_cast<TwoBytes>(_ram.GetInstructionStartAddress()));
 		LOG_TRACE("Chip8 created and pc={}", _cpu.GetProgramCounter());
@@ -234,12 +234,14 @@ namespace emu::detail
 			LOG_CRITICAL("path({}) doesn't exist", path.string());
 			return false;
 		}
-		std::ifstream file(path, std::ios::binary | std::ios::ate);
-		if (!file.is_open())
+		if (!std::filesystem::is_regular_file(path) && !std::filesystem::is_symlink(path))
 		{
 			LOG_CRITICAL("file({}) couldn't be opened", path.string());
 			return false;
 		}
+
+		std::ifstream file(path, std::ios::binary | std::ios::ate);
+		assert(file.is_open());
 
 		Initialize();
 
@@ -353,7 +355,7 @@ namespace emu::detail
 				$Fx65
 		 * */
 
-		_lastExecutedInstructionCode = Instruction::INVALID;
+		_lastExecutedInstructionCode = Instruction::END;
 		_lastExecutedInstruction = 0x0;
 
 		// zero out the first 3 nibbles and shift it down by 12 bits

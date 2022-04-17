@@ -28,6 +28,24 @@ create_test(
 
 create_test(
 	NAME
+		loggingTests
+	SOURCES
+		LoggingTests.cpp
+	DEPENDENCIES
+		testMain spdlog
+)
+
+create_test(
+	NAME
+		stopWatchTests
+	SOURCES
+		StopwatchTests.cpp
+	DEPENDENCIES
+		testMain
+)
+
+create_test(
+	NAME
 		utilityTests
 	SOURCES
 		UtilityTests.cpp

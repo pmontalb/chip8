@@ -25,6 +25,7 @@ namespace utils
 		}
 		void Stop()
 		{
+			assert(_start > 0.0);
 			const auto err = clock_gettime(clockId, &_cache);
 			assert(err == 0);
 
@@ -32,18 +33,21 @@ namespace utils
 		}
 		void Reset()
 		{
-			_start = _end = 0;
+			_start = _end = 0.0;
 			Start();
 		}
 
-		[[nodiscard]] auto GetNanoSeconds() const { return _end - _start; }
+		[[nodiscard]] auto GetNanoSeconds() const
+		{
+			return _end - _start;
+		}
 		[[nodiscard]] auto GetMicroSeconds() const { return GetNanoSeconds() * 1e-3; }
 		[[nodiscard]] auto GetMilliSeconds() const { return GetNanoSeconds() * 1e-6; }
 		[[nodiscard]] auto GetSeconds() const { return GetNanoSeconds() * 1e-9; }
 
 	private:
-		double _start = 0;
-		double _end = 0;
+		double _start = 0.0;
+		double _end = 0.0;
 		timespec _cache {};
 	};
 }

@@ -211,14 +211,18 @@ namespace emu
 		const auto kk = utils::LowestByte(instruction);
 		LOG_DEBUG("Vx({0:d}|{0:X}) regVx({1:d}|{1:X}) += kk({2:d}|{2:X}) = {3:d}|{3:X}", Vx, _registers[Vx], kk,
 				  _registers[Vx], kk);
-		_registers[Vx] += kk;
+
+		// can't use += as it might be UB
+		_registers[Vx] = static_cast<Byte>(_registers[Vx] + kk);
 	}
 	void Cpu::IndexRegisterAddEqualRegister(const TwoBytes instruction)
 	{
 		const auto Vx = utils::LowerFourBitsHighByte(instruction);
 		LOG_DEBUG("index({0:d}|{0:X}) += Vx({1:d}|{1:X}) regVx({2:d}|{2:X}) = {3:d}|{3:X}", _indexRegister, Vx,
 				  _registers[Vx], _indexRegister + _registers[Vx]);
-		_indexRegister += _registers[Vx];
+
+		// can't use += as it might be UB
+		_indexRegister = static_cast<TwoBytes>(_indexRegister + _registers[Vx]);
 	}
 
 	void Cpu::OrEqualRegister(const TwoBytes instruction)
@@ -291,7 +295,7 @@ namespace emu
 			reg1, _registers[reg1], reg2, _registers[reg2], _registers.back(), regOut,
 			_registers[reg1] - _registers[reg2]);
 
-		_registers[regOut] = _registers[reg1] - _registers[reg2];
+		_registers[regOut] = static_cast<Byte>(_registers[reg1] - _registers[reg2]);
 	}
 
 	void Cpu::ShiftRightAndStoreLastBit(const TwoBytes instruction)

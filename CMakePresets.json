@@ -139,6 +139,11 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "/usr/bin/gcc-11",
         "CMAKE_CXX_COMPILER": "/usr/bin/g++-11"
+      },
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "GCC 11.2.0"
+        }
       }
     },
     {
@@ -146,8 +151,13 @@
       "hidden": true,
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "/usr/bin/clang-12",
-        "CMAKE_CXX_COMPILER": "/usr/bin/clang++-12"
+        "CMAKE_C_COMPILER": "/usr/bin/clang-13",
+        "CMAKE_CXX_COMPILER": "/usr/bin/clang++-13"
+      },
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "Clang 13.0.0"
+        }
       }
     },
 

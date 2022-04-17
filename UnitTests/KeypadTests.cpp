@@ -83,3 +83,16 @@ TEST_F(KeypadTests, Serialize)
 		ASSERT_EQ(keypad.IsPressed(keyCode), keypad2.IsPressed(keyCode));
 	}
 }
+
+TEST_F(KeypadTests, PrintKey)
+{
+	emu::Keypad keypad;
+	for (size_t key = emu::Keys::START; key <= emu::Keys::END; ++key)
+	{
+		auto keyCode = static_cast<emu::Keys::Enum>(key);
+		if (keyCode != emu::Keys::END)
+			ASSERT_NE(emu::ToString(keyCode), "???");
+		else
+			ASSERT_EQ(emu::ToString(keyCode), "???");
+	}
+}

@@ -3,31 +3,36 @@
 
 namespace emu
 {
-	enum class Error
+	namespace Error
 	{
-		None,
-		InvalidInstruction,
-		InvalidProgramCounter,
-	};
+		enum Enum
+		{
+			START = 0,
+			None = START,
+			InvalidInstruction,
+			InvalidProgramCounter,
+			END,
+		};
+	}	 // namespace Error
 
-	template<typename OStream>
-	OStream& operator<<(OStream& os, const Error error)
+	static inline std::string_view ToString(Error::Enum error)
 	{
 		switch (error)
 		{
 			case Error::None:
-				os << "None";
-				break;
+				return "None";
 			case Error::InvalidInstruction:
-				os << "Invalid instruction";
-				break;
+				return "Invalid instruction";
 			case Error::InvalidProgramCounter:
-				os << "Invalid program counter";
-				break;
+				return "Invalid program counter";
 			default:
-				os << "?";
-				break;
+				return "?";
 		}
-		return os;
+	}
+
+	template<typename OStream>
+	OStream& operator<<(OStream& os, const Error::Enum error)
+	{
+		return os << ToString(error);
 	}
 }	 // namespace emu

@@ -28,7 +28,7 @@ namespace emu
 
 			bool Cycle();
 			void Rewind();
-			Instruction GetLastExecutedInstructionCode() const { return _lastExecutedInstructionCode; }
+			Instruction::Enum GetLastExecutedInstructionCode() const { return _lastExecutedInstructionCode; }
 			TwoBytes GetLastExecutedInstruction() const { return _lastExecutedInstruction; }
 
 			const auto& GetDisplay() const { return _display; }
@@ -59,9 +59,9 @@ namespace emu
 
 		private:
 			TwoBytes _lastExecutedInstruction = 0x0;
-			Instruction _lastExecutedInstructionCode = Instruction::INVALID;
+			Instruction::Enum _lastExecutedInstructionCode = Instruction::END;
 			using InstructionSetWorker = std::function<void(const TwoBytes)>;
-			using InstructionPair = std::pair<Instruction, InstructionSetWorker>;
+			using InstructionPair = std::pair<Instruction::Enum, InstructionSetWorker>;
 
 			std::array<InstructionPair, detail::_uniquePatternInstructions.size()> _uniquePatternInstructions{};
 			std::array<InstructionPair, detail::_0x80xyInstructions.size()> _0x80xyInstructions{};
@@ -72,7 +72,8 @@ namespace emu
 			static constexpr size_t functionTableSize = 0x10;
 			std::array<InstructionPair, functionTableSize> _instructionSet{};
 
-			Error _lastError = Error::None;
+			Error::Enum _lastError = Error::None;
+			const std::function<void(const TwoBytes)> _invalidInstruction;
 		};
 	}	 // namespace detail
 

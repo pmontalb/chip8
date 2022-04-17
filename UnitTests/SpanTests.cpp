@@ -13,7 +13,7 @@ TEST_F(SpanTests, CreationFromStdContainer)
 	{
 		std::vector<double> v(10);
 		for (size_t i = 0; i < v.size(); ++i)
-			v[i] = static_cast<double>(i * (i - 1)) + 1.0;
+			v[i] = static_cast<double>(i * (i + 1)) + 1.0;
 		utils::Span span { v };
 
 		size_t counter = 0;
@@ -36,7 +36,7 @@ TEST_F(SpanTests, RandomAccess)
 {
 	std::vector<double> v(10);
 	for (size_t i = 0; i < v.size(); ++i)
-		v[i] = static_cast<double>(i * (i - 1)) + 1.0;
+		v[i] = static_cast<double>(i * (i + 1)) + 1.0;
 	utils::Span span { v };
 	for (size_t i = 0; i < v.size(); ++i)
 		ASSERT_DOUBLE_EQ(span[i], v[i]);
@@ -46,7 +46,7 @@ TEST_F(SpanTests, SubView)
 {
 	std::vector<double> v(10);
 	for (size_t i = 0; i < v.size(); ++i)
-		v[i] = static_cast<double>(i * (i - 1)) + 1.0;
+		v[i] = static_cast<double>(i * (i + 1)) + 1.0;
 	utils::Span<double> span { v.begin() + 2, v.begin() + 4 };
 
 	size_t counter = 0;
@@ -58,7 +58,7 @@ TEST_F(SpanTests, MultipleSpans)
 {
 	std::vector<double> v(10);
 	for (size_t i = 0; i < v.size(); ++i)
-		v[i] = static_cast<double>(i * (i - 1)) + 1.0;
+		v[i] = static_cast<double>(i * (i + 1)) + 1.0;
 	utils::Span<double> span1 { v.begin() + 2, v.begin() + 4 };
 	utils::Span<double> span2 { v.begin() + 1, v.begin() + 7 };
 
@@ -77,7 +77,7 @@ TEST_F(SpanTests, CopySpan)
 {
 	std::vector<double> v(10);
 	for (size_t i = 0; i < v.size(); ++i)
-		v[i] = static_cast<double>(i * (i - 1)) + 1.0;
+		v[i] = static_cast<double>(i * (i + 1)) + 1.0;
 	utils::Span<double> span1 { v.begin() + 2, v.begin() + 4 };
 	utils::Span<double> span2(span1);
 
@@ -90,7 +90,7 @@ TEST_F(SpanTests, AssignSpan)
 {
 	std::vector<double> v(10);
 	for (size_t i = 0; i < v.size(); ++i)
-		v[i] = static_cast<double>(i * (i - 1)) + 1.0;
+		v[i] = static_cast<double>(i * (i + 1)) + 1.0;
 	utils::Span<double> span1 { v.begin() + 2, v.begin() + 4 };
 	utils::Span<double> span2;
 	span2 = span1;
@@ -104,7 +104,7 @@ TEST_F(SpanTests, MoveSpan)
 {
 	std::vector<double> v(10);
 	for (size_t i = 0; i < v.size(); ++i)
-		v[i] = static_cast<double>(i * (i - 1)) + 1.0;
+		v[i] = static_cast<double>(i * (i + 1)) + 1.0;
 	utils::Span<double> span1 { v.begin() + 2, v.begin() + 4 };
 	utils::Span<double> span2(utils::Span<double> { v.begin() + 2, v.begin() + 4 });
 
@@ -122,7 +122,7 @@ TEST_F(SpanTests, MoveAssignSpan)
 {
 	std::vector<double> v(10);
 	for (size_t i = 0; i < v.size(); ++i)
-		v[i] = static_cast<double>(i * (i - 1)) + 1.0;
+		v[i] = static_cast<double>(i * (i + 1)) + 1.0;
 	utils::Span<double> span1 { v.begin() + 2, v.begin() + 4 };
 	utils::Span<double> span2;
 	span2 = utils::Span<double> { v.begin() + 2, v.begin() + 4 };

@@ -10,6 +10,7 @@
 		__IGNORE_WARNING__("-Wsigned-enum-bitfield")                                                                   \
 		__IGNORE_WARNING__("-Wnewline-eof")                                                                            \
 		__IGNORE_WARNING__("-Wundefined-func-template")                                                                \
+		__IGNORE_WARNING__("-Wreserved-identifier")                                                                    \
 		__IGNORE_WARNING__("-Wdocumentation-unknown-command")
 #else
 	#define __IGNORE_SPDLOG_WARNINGS__                                                                                 \
@@ -57,9 +58,10 @@ namespace detail
 	__IGNORE_SPDLOG_WARNINGS__
 #endif
 	template<typename Mutex>
-	class RingBufferSink final: public spdlog::sinks::base_sink<Mutex>
+	class RingBufferSink final:
+		public spdlog::sinks::base_sink<Mutex>
 #ifdef __clang__
-	__STOP_IGNORING_WARNINGS__
+			__STOP_IGNORING_WARNINGS__
 #endif
 	{
 	public:
@@ -86,4 +88,4 @@ namespace utils
 {
 	using RingBufferSinkSt = ::detail::RingBufferSink<spdlog::details::null_mutex>;
 	using RingBufferSinkMt = ::detail::RingBufferSink<std::mutex>;
-}
+}	 // namespace utils

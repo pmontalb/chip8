@@ -7,7 +7,14 @@
 
 #include "Emulator/Logging.h"
 
+#ifdef CLANG_UBSAN
+	#pragma clang attribute push (__attribute__((no_sanitize("undefined"))), apply_to=function)
+#endif
 #include <bitset>
+#ifdef CLANG_UBSAN
+	#pragma clang attribute pop
+#endif
+
 #include <gtest/gtest.h>
 
 struct TestKeyPad final: public emu::IKeypad
@@ -107,13 +114,13 @@ TEST_F(CpuTests, RegisterSizeIs16)
 TEST_F(CpuTests, InitializationValues)
 {
 	TestCpu cpu;
-	ASSERT_EQ(cpu._programCounter, 0);
-	ASSERT_EQ(cpu._indexRegister, 0);
-	ASSERT_EQ(cpu._stackPointer, 0);
-	ASSERT_TRUE(std::all_of(cpu._stack.begin(), cpu._stack.end(), [](const auto x) { return x == 0; }));
-	ASSERT_TRUE(std::all_of(cpu._registers.begin(), cpu._registers.end(), [](const auto x) { return x == 0; }));
-	ASSERT_EQ(cpu._delayTimer, 0);
-	ASSERT_EQ(cpu._soundTimer, 0);
+	ASSERT_EQ(cpu.GetProgramCounter(), 0);
+	ASSERT_EQ(cpu.GetIndexRegister(), 0);
+	ASSERT_EQ(cpu.GetStackPointer(), 0);
+	ASSERT_TRUE(std::all_of(cpu.GetStack().begin(), cpu.GetStack().end(), [](const auto x) { return x == 0; }));
+	ASSERT_TRUE(std::all_of(cpu.GetRegisters().begin(), cpu.GetRegisters().end(), [](const auto x) { return x == 0; }));
+	ASSERT_EQ(cpu.GetDelayTimer(), 0);
+	ASSERT_EQ(cpu.GetSoundTimer(), 0);
 }
 
 TEST_F(CpuTests, GetProgramCounter)
@@ -296,8 +303,12 @@ TEST_F(CpuTests, ConditionalSkipIfKeyPressed)
 	cpu.ConditionalSkipIfKeyPressed(instruction, testKeyPad);
 	ASSERT_EQ(cpu._programCounter, 44);
 
-	testKeyPad.toggle[emu::Keys::Seven] = true;
-	testKeyPad.toggle.flip();
+
+	for (size_t k = 0; k < emu::Keys::END; ++k)
+		testKeyPad.toggle[k] = k != emu::Keys::Seven;
+
+	// this breaks clang-ubsan
+	//	testKeyPad.toggle.flip();
 	cpu.ConditionalSkipIfKeyPressed(instruction, testKeyPad);
 	ASSERT_EQ(cpu._programCounter, 44);
 }
@@ -317,8 +328,11 @@ TEST_F(CpuTests, ConditionalSkipIfKeyNotPressed)
 	cpu.ConditionalSkipIfKeyNotPressed(instruction, testKeyPad);
 	ASSERT_EQ(cpu._programCounter, 44);
 
-	testKeyPad.toggle[emu::Keys::Seven] = true;
-	testKeyPad.toggle.flip();
+	for (size_t k = 0; k < emu::Keys::END; ++k)
+		testKeyPad.toggle[k] = k != emu::Keys::Seven;
+
+	// this breaks clang-ubsan
+//	testKeyPad.toggle.flip();
 	cpu.ConditionalSkipIfKeyNotPressed(instruction, testKeyPad);
 	ASSERT_EQ(cpu._programCounter, 46);
 }
@@ -762,8 +776,12 @@ TEST_F(CpuTests, WaitUntilKeyIsPressed)
 	ASSERT_EQ(cpu._programCounter, 40);	   // success
 	cpu._registers[0x9] = std::min(emu::Keys::Seven, emu::Keys::Eight);
 
-	// all pressed (same as before
-	testKeyPad.toggle.set();
+	// all pressed (same as before)
+	for (size_t k = 0; k < emu::Keys::END; ++k)
+		testKeyPad.toggle[k] = true;
+
+	// this breaks clang-ubsan
+	//	testKeyPad.toggle.set();
 	cpu.WaitUntilKeyIsPressed(instruction, testKeyPad);
 	ASSERT_EQ(cpu._programCounter, 40);	   // success
 	cpu._registers[0x9] = emu::Keys::START;
@@ -823,4 +841,29 @@ TEST_F(CpuTests, Serialize)
 		ASSERT_EQ(cpu._registers[i], cpu2._registers[i]);
 	ASSERT_EQ(cpu._delayTimer, cpu2._delayTimer);
 	ASSERT_EQ(cpu._soundTimer, cpu2._soundTimer);
+}
+
+TEST_F(CpuTests, CheckTestKeypad)
+{
+	TestKeyPad keypad;
+	ASSERT_EQ(keypad.GetSize(), 0);
+	keypad.Press(emu::Keys::B, true);
+	ASSERT_TRUE(keypad.IsPressed(emu::Keys::B));
+}
+
+TEST_F(CpuTests, CheckTestRam)
+{
+	TestRam ram;
+	ram.data.resize(10);
+	ASSERT_EQ(ram.GetSize(), ram.data.size());
+	ram.Load("");
+	ASSERT_EQ(ram.GetSize(), ram.data.size());
+	ASSERT_EQ(ram.GetInstructionStartAddress(), 0);
+}
+
+TEST_F(CpuTests, CheckTestDisplay)
+{
+	TestDisplay display(1, 1);
+	ASSERT_FALSE(display.HasChanged());
+	display.Reset();
 }

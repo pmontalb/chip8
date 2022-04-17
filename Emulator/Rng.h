@@ -4,7 +4,13 @@
 #include "Types.h"
 #include "Interfaces/IRng.h"
 
+#ifdef CLANG_UBSAN
+#pragma clang attribute push (__attribute__((no_sanitize("unsigned-integer-overflow"))), apply_to=function)
+#endif
 #include <random>
+#ifdef CLANG_UBSAN
+#pragma clang attribute pop
+#endif
 
 namespace emu
 {
