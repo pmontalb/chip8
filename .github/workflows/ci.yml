@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [gcc-debug, gcc-asan, gcc-ubsan, gcc-tsan, gcc-release, gcc-profile, gcc-ofast, gcc-memory-opt, gcc-lto, gcc-ofast-lto, gcc-memory-opt-lto, gcc-ofast-memory-opt-lto, clang-asan, clang-ubsan, clang-tsan, clang-coverage, clang-release, clang-profile, clang-ofast, clang-memory-opt, clang-lto, clang-ofast-lto, clang-memory-opt-lto, clang-ofast-memory-opt-lto]
+
+    steps:
+      - name: Install gcc-11
+        run: |
+          sudo apt update
+          sudo apt install gcc-11 g++-11
+
+      - name: Install clang-13
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: 13
+          platform: any
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          git config --file .gitmodules --get-regexp url | while read url; do
+          git config --file=.gitmodules $(echo "$url" | sed -E "s/git@github.com:|https:\/\/github.com\//https:\/\/${{ secrets.CI_PAT }}:${{ secrets.CI_PAT }}@github.com\//")
+          done
+          git submodule init
+          git submodule update --init --recursive
+
+      - name: Install cmake
+        run: |
+          sudo apt update
+          sudo apt install cmake
+
+      - name: Install ninja
+        uses: seanmiddleditch/gha-setup-ninja@v3
+
+      - name: Install gtest
+        run: sudo apt-get install libgtest-dev
+
+      - name: Cmake
+        run: |
+          cd ${{runner.workspace}}/chip8
+          cp ${{runner.workspace}}/chip8/cmake/CMakePresets.json ${{runner.workspace}}/chip8/CMakePresets.json
+          cmake . --preset=${{matrix.preset}}
+
+      - name: Build
+        run: |
+          cd ${{runner.workspace}}/chip8/cmake-build-${{matrix.preset}}
+          ninja
+
+      - name: Test
+        run: |
+          cd ${{runner.workspace}}/chip8/cmake-build-${{matrix.preset}}
+          ninja build_and_test
