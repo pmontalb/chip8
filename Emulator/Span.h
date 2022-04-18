@@ -13,8 +13,18 @@ namespace utils
 	{
 	public:
 		template<typename Container>
-		constexpr Span(Container&& container) : _data(&(*std::begin(container))), _length(std::size(container))
+		constexpr Span(Container&& container)
 		{
+			if (std::size(container) > 0)
+			{
+				_data = &(*std::begin(container));
+				_length = std::size(container);
+			}
+			else
+			{
+				_data = nullptr;
+				_length = 0;
+			}
 			// we can only support lvalue references!
 			static_assert(std::is_rvalue_reference_v<decltype(container)> == false);
 		}
