@@ -61,7 +61,7 @@ jobs:
         run: |
           cd ${{runner.workspace}}/chip8
           cp ${{runner.workspace}}/chip8/cmake/CMakePresets.json ${{runner.workspace}}/chip8/CMakePresets.json
-          cmake . --preset=${{matrix.preset}}
+          cmake . --preset=gcc-coverage
 
       - name: Build
         run: |
