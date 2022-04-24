@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -54,7 +54,7 @@ jobs:
       - name: Install GUI libs
         run: |
           sudo apt update
-          sudo apt install xorg-dev libglu1-mesa-dev
+          sudo apt install xorg-dev libglu1-mesa-dev libgtk-3-dev
 
       - name: Cmake
         run: |
