@@ -1,5 +1,6 @@
 [![CI](https://github.com/pmontalb/chip8/actions/workflows/ci.yml/badge.svg)](https://github.com/pmontalb/chip8/actions/workflows/ci.yml)
 [![Coverage](https://github.com/pmontalb/chip8/actions/workflows/coverage.yml/badge.svg)](https://codecov.io/gh/pmontalb/chip8)
+[![codecov](https://codecov.io/gh/pmontalb/chip8/branch/main/graph/badge.svg?token=5AVzRPEdhB)](https://codecov.io/gh/pmontalb/chip8)
 
 # Chip8 Interpreter
 
