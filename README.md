@@ -35,6 +35,8 @@ I spent way too long on this project, but I wanted to satisfy the following requ
 
 A design choice that I'm not fully satisfied with is the fact that the Chip8 interpreter object is templated. I could have injected dependencies at creation alternatively, but I decided to use templates as it was quicker to write unit tests for.
 
+The rewind feature doesn't really work, as it just retreat the program counter, whilst I should restore the previous state of the emulator (and keep an history, really). Maybe I'll do that in the future, it's not too hard!
+
 A screenshot is for your reference here:
 ![ScreenShot](https://raw.github.com/pmontalb/chip8/master/chip8.png)
 
