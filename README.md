@@ -1,5 +1,7 @@
 [![CI](https://github.com/pmontalb/chip8/actions/workflows/ci.yml/badge.svg)](https://github.com/pmontalb/chip8/actions/workflows/ci.yml)
 
+[![Coverage](https://github.com/pmontalb/chip8/actions/workflows/coverage.yml/badge.svg)](https://github.com/pmontalb/chip8/actions/workflows/coverage.yml)
+
 # Chip8 Interpreter
 
 I developed this project as a learning exercise for developing something more interesting (like a GB emulator). I keep referring to this as an emulator, although I'm aware this is just an interpreter.
