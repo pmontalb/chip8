@@ -47,6 +47,11 @@ jobs:
       - name: Install gtest
         run: sudo apt-get install libgtest-dev
         
+      - name: Install GUI libs
+        run: |
+          sudo apt update
+          sudo apt install xorg-dev libglu1-mesa-dev libgtk-3-dev
+        
       - name: Install gcovr
         shell: bash
         run: |
