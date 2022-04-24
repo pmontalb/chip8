@@ -31,6 +31,7 @@ I spent way too long on this project, but I wanted to satisfy the following requ
 - 100% code coverage
   - Everything needs to be unit tested
   - I didn't manage to run clang-coverage in a fully automated way. This gives more info than gcov's, but the html report produced with gcovr is enough
+  - For some reason codecov doesn't play too well with reports generated from gcovr. I've tried to exclude throw and unreachable branches, which improved from 58% to 75%, but I'm still missing 25% on log lines and some lambdas.
 
 A design choice that I'm not fully satisfied with is the fact that the Chip8 interpreter object is templated. I could have injected dependencies at creation alternatively, but I decided to use templates as it was quicker to write unit tests for.
 
