@@ -79,7 +79,7 @@ jobs:
           cd ${{runner.workspace}}/chip8/cmake-build-gcc-coverage
           mkdir Coverage
           cd Coverage
-          gcovr -r ../../ -x coverage.xml --xml-pretty -e ${{runner.workspace}}/chip8/Submodules/ -e ${{runner.workspace}}/chip8/cmake-build-gcc-coverage/_deps/ -e ${{runner.workspace}}/chip8/main.cpp --gcov-executable=gcov-11 -s
+          gcovr -r ../../ -x coverage.xml --xml-pretty -e ${{runner.workspace}}/chip8/Submodules/ -e ${{runner.workspace}}/chip8/cmake-build-gcc-coverage/_deps/ -e ${{runner.workspace}}/chip8/main.cpp --gcov-executable=gcov-11 -s --exclude-unreachable-branches --exclude-throw-branches
           mv coverage.xml ${{runner.workspace}}/coverage.xml
 
       - name: Archive coverage results
